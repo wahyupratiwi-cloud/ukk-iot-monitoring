@@ -291,11 +291,16 @@ td.badge-gelap{color:#6b4fa0;background:#eeebfa;border-radius:6px;font-size:.62r
   let cl=null, conn=false, mc=0, st=null, ui=null, rowNum=0;
   let lastStatus="";
   let offTimer=null;
+  let manualDisconnect = false;
 
   // ================= CONNECT =================
   function toggle(){conn?doDisc():doConn();}
 
   function doConn(){
+
+    // 🔥 TAMBAHKAN DI SINI
+    manualDisconnect = false;
+
     const id="Web-"+Math.floor(Math.random()*9000+1000);
 
     badge("connecting","CONNECTING...");
@@ -314,11 +319,21 @@ td.badge-gelap{color:#6b4fa0;background:#eeebfa;border-radius:6px;font-size:.62r
       onFailure:onFail
     });
   }
-
+  
   function doDisc(){
-    if(cl && conn) cl.disconnect();
-  }
+    if(cl && conn){
+      manualDisconnect = true;
+      cl.disconnect();
 
+      // langsung ubah UI ke DISCONNECTED
+      const b=document.getElementById("btn");
+      b.textContent="Hubungkan ke MQTT";
+      b.classList.remove("disc");
+      b.disabled=false;
+
+      badge("","DISCONNECTED");
+    }
+  }
   // ================= MQTT =================
   function onConn(){
     conn=true;
@@ -355,10 +370,19 @@ td.badge-gelap{color:#6b4fa0;background:#eeebfa;border-radius:6px;font-size:.62r
 
     setSystemOff();
 
-    // AUTO RECONNECT
-    setTimeout(doConn,3000);
+    const b=document.getElementById("btn");
+    b.textContent="Hubungkan ke MQTT";
+    b.classList.remove("disc");
+
+    // hanya reconnect kalau bukan manual
+    if(!manualDisconnect){
+      setTimeout(doConn,3000);
+    }
+
+    manualDisconnect = false;
   }
 
+  
   // ================= DATA =================
   function onMsg(m){
     const pl=m.payloadString.trim();
