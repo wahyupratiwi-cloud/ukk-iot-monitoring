@@ -1,1595 +1,904 @@
 <!doctype html>
 <html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>IoT Monitor — Wahyu Pratiwi</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/paho-mqtt.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-    <style>
-      *,
-      *::before,
-      *::after {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IoT Monitor — Kelompok 6</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/paho-mqtt.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
-      /* ============================================================
-   SPLASH SCREEN
-============================================================ */
-      #splash {
-        position: fixed;
-        inset: 0;
-        z-index: 9999;
-        background: linear-gradient(135deg, #3b1f6e 0%, #6b4fa0 45%, #9b7ec8 100%);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 0;
-        padding: 24px;
-        transition:
-          opacity 0.6s ease,
-          visibility 0.6s ease;
-      }
-      #splash.hide {
-        opacity: 0;
-        visibility: hidden;
-      }
+    :root{
+      --coral:   #FF6B6B;
+      --coral-dk:#E85555;
+      --coral-lt:#FFE8E8;
+      --teal:    #2EC4B6;
+      --teal-dk: #1FA99D;
+      --teal-lt: #D8F5F3;
+      --gold:    #FFB347;
+      --gold-dk: #F59D2A;
+      --gold-lt: #FFF3DC;
+      --sky:     #74C0FC;
+      --sky-lt:  #E3F2FF;
+      --mint:    #69DB7C;
+      --mint-lt: #DFFBE3;
+      --bg:      #FFF9F5;
+      --bg2:     #FFF3EC;
+      --white:   #FFFFFF;
+      --text:    #2D2D2D;
+      --text-2:  #666666;
+      --text-3:  #AAAAAA;
+      --border:  #F0E8E0;
+      --radius:  20px;
+      --shadow:  0 4px 20px rgba(0,0,0,0.07);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.10);
+    }
 
-      .splash-glow {
-        width: 110px;
-        height: 110px;
-        border-radius: 28px;
-        background: rgba(255, 255, 255, 0.12);
-        border: 2px solid rgba(255, 255, 255, 0.25);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 32px;
-        box-shadow: 0 0 60px rgba(200, 180, 240, 0.3);
-      }
+    /* ===================== SPLASH ===================== */
+    #splash{
+      position:fixed;inset:0;z-index:9999;
+      background:#FAFAFA;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:0;padding:40px;
+      transition:opacity 0.5s,visibility 0.5s;
+    }
+    #splash.hide{opacity:0;visibility:hidden}
 
-      .splash-tag {
-        font-family: "JetBrains Mono", monospace;
-        font-size: 0.7rem;
-        letter-spacing: 3px;
-        color: rgba(255, 255, 255, 0.55);
-        text-transform: uppercase;
-        margin-bottom: 14px;
-      }
+    .sp-icon{
+      width:72px;height:72px;border-radius:20px;
+      background:linear-gradient(135deg,var(--coral),var(--gold));
+      display:flex;align-items:center;justify-content:center;
+      margin-bottom:32px;
+      box-shadow:0 8px 28px rgba(255,107,107,0.28);
+    }
 
-      .splash-title {
-        font-family: "Inter", sans-serif;
-        font-size: 1.85rem;
-        font-weight: 800;
-        color: #fff;
-        text-align: center;
-        line-height: 1.25;
-        margin-bottom: 10px;
-        max-width: 440px;
-      }
+    .sp-eyebrow{
+      font-family:'Space Mono',monospace;font-size:0.6rem;
+      letter-spacing:3px;text-transform:uppercase;
+      color:#888888;margin-bottom:14px;
+    }
+    .sp-title{
+      font-family:'Nunito',sans-serif;font-size:2rem;font-weight:900;
+      color:#2D2D2D;text-align:center;line-height:1.2;margin-bottom:8px;
+    }
+    .sp-sub{
+      font-size:0.85rem;color:#888888;
+      margin-bottom:40px;text-align:center;line-height:1.6;
+    }
+    .sp-divider{
+      width:40px;height:2px;background:#DDDDDD;
+      border-radius:2px;margin-bottom:28px;
+    }
+    .sp-by{
+      font-family:'Space Mono',monospace;font-size:0.65rem;
+      color:#999999;margin-bottom:36px;letter-spacing:2px;
+    }
+    .sp-btn{
+      padding:13px 44px;
+      background:var(--coral);
+      font-family:'Nunito',sans-serif;font-size:0.92rem;font-weight:800;
+      color:#fff;border:none;border-radius:12px;cursor:pointer;
+      box-shadow:0 6px 20px rgba(255,107,107,0.3);
+      transition:all 0.2s;letter-spacing:0.3px;
+    }
+    .sp-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(255,107,107,0.38)}
+    .sp-chips{display:flex;gap:7px;margin-top:28px;flex-wrap:wrap;justify-content:center}
+    .sp-chip{
+      font-family:'Space Mono',monospace;font-size:0.55rem;letter-spacing:1.5px;
+      padding:4px 10px;border-radius:8px;
+      background:#F0F0F0;color:#888888;border:1px solid #E0E0E0;
+    }
 
-      .splash-title span {
-        color: #e0c8ff;
-      }
+    /* ===================== BODY ===================== */
+    body{
+      background:var(--bg);
+      font-family:'Nunito',sans-serif;
+      color:var(--text);
+      min-height:100vh;
+    }
 
-      .splash-sub {
-        font-size: 0.88rem;
-        color: rgba(255, 255, 255, 0.65);
-        margin-bottom: 6px;
-        text-align: center;
-      }
+    /* ===================== TOP HEADER ===================== */
+    .topbar{
+      background:var(--white);
+      border-bottom:2px solid var(--border);
+      padding:0 28px;height:64px;
+      display:flex;align-items:center;justify-content:space-between;
+      position:sticky;top:0;z-index:100;
+      box-shadow:0 2px 16px rgba(255,107,107,0.08);
+    }
+    .tb-left{display:flex;align-items:center;gap:14px}
+    .tb-icon{
+      width:40px;height:40px;border-radius:12px;
+      background:linear-gradient(135deg,var(--coral),var(--gold));
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 4px 12px rgba(255,107,107,0.3);
+    }
+    .tb-title{font-size:1.05rem;font-weight:900;color:var(--text)}
+    .tb-sub{font-family:'Space Mono',monospace;font-size:0.55rem;color:var(--text-3);margin-top:1px}
+    .tb-right{display:flex;align-items:center;gap:10px}
 
-      .splash-author {
-        font-family: "JetBrains Mono", monospace;
-        font-size: 0.78rem;
-        color: #d4b8f8;
-        margin-bottom: 48px;
-        letter-spacing: 0.5px;
-      }
+    #badge{
+      display:flex;align-items:center;gap:7px;
+      font-family:'Space Mono',monospace;font-size:0.58rem;font-weight:700;
+      padding:7px 16px;border-radius:20px;letter-spacing:0.5px;
+      background:var(--bg2);border:2px solid var(--border);color:var(--text-3);
+      transition:all 0.3s;
+    }
+    #badge.connected{background:var(--mint-lt);border-color:#A3E9AF;color:#2A8C3C}
+    #badge.error{background:var(--coral-lt);border-color:#FFBCBC;color:var(--coral-dk)}
+    #badge.connecting{background:var(--gold-lt);border-color:#FFD89A;color:var(--gold-dk)}
+    #dot{width:8px;height:8px;border-radius:50%;background:var(--text-3);transition:all 0.3s;flex-shrink:0}
+    #badge.connected #dot{background:var(--mint);animation:blink 1.8s infinite}
+    #badge.error #dot{background:var(--coral)}
+    #badge.connecting #dot{background:var(--gold);animation:blink 0.6s infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
 
-      .splash-btn {
-        padding: 14px 48px;
-        background: #fff;
-        color: #6b4fa0;
-        font-family: "Inter", sans-serif;
-        font-size: 0.95rem;
-        font-weight: 700;
-        border: none;
-        border-radius: 40px;
-        cursor: pointer;
-        letter-spacing: 0.3px;
-        transition: all 0.2s;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-      }
-      .splash-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28);
-      }
-      .splash-btn:active {
-        transform: scale(0.98);
-      }
+    /* ===================== LAYOUT ===================== */
+    .page{max-width:1040px;margin:0 auto;padding:28px 20px 60px}
 
-      .splash-divider {
-        width: 48px;
-        height: 2px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 2px;
-        margin: 28px 0;
-      }
+    /* Hero stats strip */
+    .hero-strip{
+      display:grid;grid-template-columns:1fr 1fr 1fr 1fr;
+      gap:14px;margin-bottom:20px;
+    }
+    .hero-card{
+      border-radius:var(--radius);padding:20px 18px;
+      position:relative;overflow:hidden;
+      transition:transform 0.2s,box-shadow 0.2s;
+      cursor:default;
+    }
+    .hero-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+    .hero-card::before{
+      content:'';position:absolute;
+      width:80px;height:80px;border-radius:50%;
+      background:rgba(255,255,255,0.15);
+      right:-20px;top:-20px;
+    }
+    .hc-coral{background:linear-gradient(135deg,#FF6B6B,#FF8E8E);box-shadow:0 6px 20px rgba(255,107,107,0.3)}
+    .hc-teal{background:linear-gradient(135deg,#2EC4B6,#4DD6CA);box-shadow:0 6px 20px rgba(46,196,182,0.3)}
+    .hc-gold{background:linear-gradient(135deg,#FFB347,#FFCA6A);box-shadow:0 6px 20px rgba(255,179,71,0.3)}
+    .hc-sky{background:linear-gradient(135deg,#74C0FC,#96D2FF);box-shadow:0 6px 20px rgba(116,192,252,0.3)}
+    .hc-label{
+      font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;
+      color:rgba(255,255,255,0.75);margin-bottom:10px;
+      font-family:'Space Mono',monospace;
+    }
+    .hc-val{
+      font-size:2.2rem;font-weight:900;color:#fff;line-height:1;
+      font-family:'Space Mono',monospace;
+    }
+    .hc-unit{font-size:0.85rem;font-weight:700;color:rgba(255,255,255,0.7);margin-left:3px}
+    .hc-sub{font-size:0.65rem;color:rgba(255,255,255,0.7);margin-top:8px;font-weight:600}
+    .hc-bar{height:4px;border-radius:4px;background:rgba(255,255,255,0.25);margin-top:10px;overflow:hidden}
+    .hc-fill{height:100%;border-radius:4px;background:rgba(255,255,255,0.7);width:0%;transition:width 0.7s}
 
-      .splash-dots {
-        display: flex;
-        gap: 8px;
-        margin-top: 36px;
-      }
-      .splash-dots span {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.3);
-      }
-      .splash-dots span:nth-child(2) {
-        background: rgba(255, 255, 255, 0.6);
-      }
-      .splash-dots span:nth-child(3) {
-        background: rgba(255, 255, 255, 0.3);
-      }
+    /* ===================== SECOND ROW ===================== */
+    .row2{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:14px;margin-bottom:20px}
 
-      /* ============================================================
-   MAIN APP
-============================================================ */
-      body {
-        background: #f3eeff;
-        color: #2d1f4e;
-        font-family: "Inter", sans-serif;
-        padding: 24px 16px 48px;
-      }
-      .wrap {
-        max-width: 860px;
-        margin: 0 auto;
-      }
+    .card{
+      background:var(--white);border:2px solid var(--border);
+      border-radius:var(--radius);padding:22px;
+      box-shadow:var(--shadow);
+    }
+    .card-label{
+      font-family:'Space Mono',monospace;font-size:0.56rem;letter-spacing:2px;
+      text-transform:uppercase;color:var(--text-3);font-weight:700;margin-bottom:14px;
+    }
 
-      header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: #fff;
-        border: 1px solid #e0d4f7;
-        border-radius: 18px;
-        padding: 15px 22px;
-        margin-bottom: 18px;
-        flex-wrap: wrap;
-        gap: 10px;
-      }
-      .brand {
-        display: flex;
-        align-items: center;
-        gap: 11px;
-      }
-      .bdot {
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
-        background: #6b4fa0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-      }
-      .btitle {
-        font-size: 0.95rem;
-        font-weight: 700;
-        color: #2d1f4e;
-        line-height: 1.2;
-      }
-      .bsub {
-        font-size: 0.64rem;
-        color: #9b86c0;
-        font-family: "JetBrains Mono", monospace;
-        margin-top: 2px;
-      }
+    /* System status card */
+    .sys-display{display:flex;flex-direction:column;align-items:center;gap:10px;padding:6px 0}
+    .sys-orb{
+      width:64px;height:64px;border-radius:50%;
+      background:var(--bg2);border:3px solid var(--border);
+      display:flex;align-items:center;justify-content:center;
+      transition:all 0.5s;font-size:24px;
+    }
+    .sys-orb.on{
+      background:var(--mint-lt);border-color:var(--mint);
+      box-shadow:0 0 0 8px rgba(105,219,124,0.15),0 0 0 16px rgba(105,219,124,0.07);
+      animation:orbpulse 2.5s ease-in-out infinite;
+    }
+    .sys-orb.manual{background:var(--gold-lt);border-color:var(--gold);box-shadow:0 0 0 8px rgba(255,179,71,0.15)}
+    @keyframes orbpulse{0%,100%{box-shadow:0 0 0 8px rgba(105,219,124,0.15),0 0 0 16px rgba(105,219,124,0.07)}50%{box-shadow:0 0 0 12px rgba(105,219,124,0.2),0 0 0 24px rgba(105,219,124,0.05)}}
+    .sys-label{
+      font-size:1.1rem;font-weight:900;color:var(--text-3);transition:color 0.4s;
+      font-family:'Space Mono',monospace;
+    }
+    .sys-label.on{color:var(--mint-dk,#2A8C3C)}
+    .sys-label.manual{color:var(--gold-dk)}
+    .sys-note{font-size:0.68rem;color:var(--text-3);text-align:center;line-height:1.5;max-width:130px}
 
-      #badge {
-        display: flex;
-        align-items: center;
-        gap: 7px;
-        font-family: "JetBrains Mono", monospace;
-        font-size: 0.64rem;
-        font-weight: 500;
-        padding: 7px 16px;
-        border-radius: 30px;
-        background: #f4f0fc;
-        border: 1px solid #e0d4f7;
-        color: #b8a8d0;
-        transition: all 0.3s;
-        letter-spacing: 0.5px;
-      }
-      #badge.connected {
-        background: #eaf7f1;
-        border-color: #a8dfc5;
-        color: #2a7a55;
-      }
-      #badge.error {
-        background: #fff0ef;
-        border-color: #f5b8b3;
-        color: #c0392b;
-      }
-      #badge.connecting {
-        background: #fffbe6;
-        border-color: #f0d090;
-        color: #c07a10;
-      }
-      #dot {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: #b8a8d0;
-        flex-shrink: 0;
-        transition: all 0.3s;
-      }
-      #badge.connected #dot {
-        background: #4caf82;
-        animation: pulse 1.8s infinite;
-      }
-      #badge.error #dot {
-        background: #c0392b;
-      }
-      #badge.connecting #dot {
-        background: #c07a10;
-        animation: pulse 0.7s infinite;
-      }
-      @keyframes pulse {
-        0%,
-        100% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0.25;
-        }
-      }
+    /* Mode card */
+    .mode-display{display:flex;flex-direction:column;gap:12px}
+    .mode-pill{
+      display:flex;align-items:center;gap:10px;
+      padding:12px 14px;border-radius:14px;
+      background:var(--bg2);border:2px solid var(--border);
+      transition:all 0.35s;
+    }
+    .mode-pill.auto{background:var(--sky-lt);border-color:#B0D8F8}
+    .mode-pill.manual{background:var(--gold-lt);border-color:#FFD89A}
+    .mode-pill-dot{width:10px;height:10px;border-radius:50%;background:var(--text-3);transition:all 0.3s;flex-shrink:0}
+    .mode-pill.auto .mode-pill-dot{background:var(--sky);box-shadow:0 0 0 3px rgba(116,192,252,0.25)}
+    .mode-pill.manual .mode-pill-dot{background:var(--gold);animation:blink 1s infinite}
+    .mode-pill-text{font-family:'Space Mono',monospace;font-size:0.72rem;font-weight:700;color:var(--text-2)}
+    .mode-hint{font-size:0.65rem;color:var(--text-3);margin-top:2px}
 
-      .g21 {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 14px;
-        margin-bottom: 14px;
-      }
-      .g2 {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 14px;
-        margin-bottom: 14px;
-      }
-      .g4 {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 14px;
-        margin-bottom: 14px;
-      }
-      .g3s {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 14px;
-        margin-bottom: 14px;
-      }
+    /* LDR card */
+    .ldr-big{display:flex;flex-direction:column;align-items:center;gap:14px;padding:8px 0}
+    .ldr-icon{
+      width:72px;height:72px;border-radius:50%;
+      background:var(--bg2);border:3px solid var(--border);
+      display:flex;align-items:center;justify-content:center;
+      font-size:28px;transition:all 0.5s;
+    }
+    .ldr-icon.terang{
+      background:var(--gold-lt);border-color:var(--gold);
+      box-shadow:0 0 0 10px rgba(255,179,71,0.12),0 0 0 20px rgba(255,179,71,0.05);
+      animation:glow 2s ease-in-out infinite;
+    }
+    .ldr-icon.gelap{background:var(--sky-lt);border-color:var(--sky);box-shadow:0 0 0 10px rgba(116,192,252,0.12)}
+    @keyframes glow{0%,100%{box-shadow:0 0 0 10px rgba(255,179,71,0.12),0 0 0 20px rgba(255,179,71,0.05)}50%{box-shadow:0 0 0 14px rgba(255,179,71,0.18),0 0 0 28px rgba(255,179,71,0.07)}}
+    .ldr-badge{
+      padding:8px 22px;border-radius:20px;font-weight:800;font-size:0.88rem;
+      background:var(--bg2);color:var(--text-3);border:2px solid var(--border);transition:all 0.4s;
+    }
+    .ldr-badge.terang{background:var(--gold-lt);color:var(--gold-dk);border-color:var(--gold)}
+    .ldr-badge.gelap{background:var(--sky-lt);color:#3A8AC4;border-color:var(--sky)}
 
-      .card {
-        background: #fff;
-        border: 1px solid #e0d4f7;
-        border-radius: 16px;
-        padding: 18px 20px;
-      }
-      .clabel {
-        font-size: 0.58rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1.8px;
-        color: #b8a8d0;
-        margin-bottom: 12px;
-      }
+    /* ===================== LED SECTION ===================== */
+    .led-section{margin-bottom:20px}
+    .section-title{
+      font-size:0.6rem;font-family:'Space Mono',monospace;font-weight:700;
+      text-transform:uppercase;letter-spacing:2.5px;color:var(--text-3);
+      margin-bottom:12px;display:flex;align-items:center;gap:10px;
+    }
+    .section-title::after{content:'';flex:1;height:1px;background:var(--border)}
 
-      /* system */
-      .sys-row {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
-      .sring {
-        width: 58px;
-        height: 58px;
-        border-radius: 50%;
-        border: 2.5px solid #e0d4f7;
-        background: #f3eeff;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        transition: all 0.4s;
-      }
-      .sring.on {
-        border-color: #4caf82;
-        background: #eaf7f1;
-        box-shadow: 0 0 0 6px rgba(76, 175, 130, 0.1);
-      }
-      .sval {
-        font-size: 1.8rem;
-        font-weight: 700;
-        line-height: 1;
-        color: #e0d4f7;
-        transition: color 0.4s;
-      }
-      .sval.on {
-        color: #4caf82;
-      }
-      .snote {
-        font-size: 0.71rem;
-        color: #9b86c0;
-        margin-top: 5px;
-      }
+    .led-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    .led-tile{
+      background:var(--white);border:2px solid var(--border);
+      border-radius:18px;padding:20px 12px;
+      display:flex;flex-direction:column;align-items:center;gap:8px;
+      box-shadow:var(--shadow);transition:all 0.3s;position:relative;overflow:hidden;
+    }
+    .led-tile::after{
+      content:'';position:absolute;inset:0;border-radius:18px;
+      background:transparent;transition:background 0.4s;
+    }
+    .led-tile.glow-green::after{background:rgba(105,219,124,0.06)}
+    .led-tile.glow-yellow::after{background:rgba(255,179,71,0.06)}
+    .led-tile.glow-red::after{background:rgba(255,107,107,0.06)}
+    .led-tile.glow-green{border-color:#A3E9AF;box-shadow:0 6px 20px rgba(105,219,124,0.15)}
+    .led-tile.glow-yellow{border-color:#FFD89A;box-shadow:0 6px 20px rgba(255,179,71,0.15)}
+    .led-tile.glow-red{border-color:#FFBCBC;box-shadow:0 6px 20px rgba(255,107,107,0.15)}
 
-      /* sensor */
-      .sensor-row {
-        display: flex;
-        align-items: flex-end;
-        gap: 5px;
-      }
-      .snum {
-        font-size: 1.9rem;
-        font-weight: 700;
-        color: #6b4fa0;
-        line-height: 1;
-        font-family: "JetBrains Mono", monospace;
-      }
-      .sunit {
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: #b8a8d0;
-        padding-bottom: 3px;
-      }
-      .sbar {
-        height: 4px;
-        border-radius: 4px;
-        background: #f3eeff;
-        margin-top: 10px;
-        overflow: hidden;
-      }
-      .sfill {
-        height: 100%;
-        border-radius: 4px;
-        background: #9b7ec8;
-        width: 0%;
-        transition: width 0.6s;
-      }
-      .shint {
-        font-size: 0.61rem;
-        color: #c8b8e8;
-        margin-top: 5px;
-      }
+    .lorb{
+      width:36px;height:36px;border-radius:50%;
+      background:var(--bg2);border:3px solid var(--border);transition:all 0.4s;
+    }
+    .lorb.green{background:#69DB7C;border-color:#40C05A;box-shadow:0 0 16px rgba(105,219,124,0.6)}
+    .lorb.yellow{background:var(--gold);border-color:var(--gold-dk);box-shadow:0 0 16px rgba(255,179,71,0.6)}
+    .lorb.red{background:var(--coral);border-color:var(--coral-dk);box-shadow:0 0 16px rgba(255,107,107,0.6)}
+    .lname{font-size:0.78rem;font-weight:800;color:var(--text);z-index:1}
+    .lstate{font-size:0.62rem;color:var(--text-3);z-index:1;transition:color 0.3s}
+    .lstate.on{color:var(--teal-dk)}
+    .lbadge{
+      font-family:'Space Mono',monospace;font-size:0.53rem;
+      padding:3px 8px;border-radius:8px;background:var(--bg2);
+      color:var(--text-3);border:1px solid var(--border);z-index:1;text-align:center;
+    }
+    .lbadge.active{background:var(--teal-lt);color:var(--teal-dk);border-color:#90DAD5}
 
-      /* ldr */
-      .ldr-row {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-      .ldrbox {
-        width: 46px;
-        height: 46px;
-        border-radius: 12px;
-        background: #f3eeff;
-        border: 1px solid #e0d4f7;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        transition: all 0.4s;
-        font-size: 20px;
-      }
-      .ldrbox.terang {
-        background: #fff8e0;
-        border-color: #f0d090;
-      }
-      .ldrbox.gelap {
-        background: #f0eefa;
-        border-color: #d4c5f0;
-      }
-      .ldrpill {
-        font-size: 0.85rem;
-        font-weight: 700;
-        padding: 6px 16px;
-        border-radius: 30px;
-        background: #f3eeff;
-        color: #b8a8d0;
-        transition: all 0.4s;
-      }
-      .ldrpill.terang {
-        background: #fff8e0;
-        color: #9a6500;
-      }
-      .ldrpill.gelap {
-        background: #eeebfa;
-        color: #6b4fa0;
-      }
+    /* ===================== STATS ROW ===================== */
+    .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+    .stat-card{
+      background:var(--white);border:2px solid var(--border);
+      border-radius:var(--radius);padding:18px 20px;
+      box-shadow:var(--shadow);
+    }
+    .stat-val{
+      font-family:'Space Mono',monospace;font-size:1.6rem;font-weight:700;
+      color:var(--teal-dk);line-height:1;
+    }
+    .stat-unit{font-size:0.58rem;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;margin-top:5px;font-weight:700}
 
-      /* led */
-      .led-card {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        padding: 16px 12px;
-      }
-      .lorb {
-        width: 34px;
-        height: 34px;
-        border-radius: 50%;
-        background: #f0ecfc;
-        border: 2px solid #e0d4f7;
-        transition: all 0.4s;
-      }
-      .lorb.green {
-        background: #2ecc71;
-        border-color: #27ae60;
-        box-shadow: 0 0 10px rgba(46, 204, 113, 0.55);
-      }
-      .lorb.yellow {
-        background: #f1c40f;
-        border-color: #d4ac0d;
-        box-shadow: 0 0 10px rgba(241, 196, 15, 0.55);
-      }
-      .lorb.red {
-        background: #e74c3c;
-        border-color: #c0392b;
-        box-shadow: 0 0 10px rgba(230, 76, 60, 0.55);
-      }
-      .lname {
-        font-size: 0.75rem;
-        font-weight: 700;
-        color: #7a6a96;
-        text-align: center;
-      }
-      .lstate {
-        font-size: 0.65rem;
-        color: #b8a8d0;
-        transition: color 0.3s;
-        text-align: center;
-      }
-      .lstate.on {
-        color: #6b4fa0;
-      }
-      .lbadge {
-        font-size: 0.55rem;
-        font-weight: 600;
-        padding: 2px 8px;
-        border-radius: 8px;
-        background: #f3eeff;
-        color: #b8a8d0;
-        margin-top: 2px;
-        text-align: center;
-      }
-      .lbadge.active {
-        background: #eeebfa;
-        color: #6b4fa0;
-      }
+    /* ===================== LOG ===================== */
+    .log-card{background:var(--white);border:2px solid var(--border);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow);margin-bottom:20px}
+    #log{
+      font-family:'Space Mono',monospace;font-size:0.62rem;
+      height:115px;overflow-y:auto;
+      background:var(--bg);border-radius:12px;
+      padding:10px 12px;border:2px solid var(--border);
+      display:flex;flex-direction:column;gap:3px;
+    }
+    #log::-webkit-scrollbar{width:4px}
+    #log::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+    .le{display:flex;gap:9px;opacity:0;animation:fin 0.2s forwards}
+    @keyframes fin{to{opacity:1}}
+    .lt{color:var(--text-3);flex-shrink:0}
+    .lk{color:var(--teal-dk);flex-shrink:0;font-weight:700}
+    .lm{color:var(--text-2)}
+    .lm.on-txt{color:#2A8C3C}
+    .lm.muted{color:var(--text-3)}
 
-      /* stats */
-      .stval {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #6b4fa0;
-        font-family: "JetBrains Mono", monospace;
-        line-height: 1;
-      }
-      .stunit {
-        font-size: 0.58rem;
-        color: #b8a8d0;
-        margin-top: 4px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-      }
+    /* ===================== TABLE ===================== */
+    .tbl-card{background:var(--white);border:2px solid var(--border);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow)}
+    .tbl-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+    .tbl-actions{display:flex;gap:7px;flex-wrap:wrap}
+    .tbtn{
+      font-size:0.65rem;font-family:'Nunito',sans-serif;font-weight:700;
+      padding:6px 14px;border-radius:10px;cursor:pointer;border:2px solid;transition:all 0.15s;
+    }
+    .tbtn-del{background:var(--coral-lt);border-color:#FFBCBC;color:var(--coral-dk)}
+    .tbtn-del:hover{background:#FFD5D5}
+    .tbtn-del:disabled{opacity:0.4;cursor:not-allowed}
+    .tbtn-csv{background:var(--mint-lt);border-color:#A3E9AF;color:#2A8C3C}
+    .tbtn-csv:hover{background:#C8F5D0}
+    .tbtn-clr{background:var(--bg2);border-color:var(--border);color:var(--text-3)}
+    .tbtn-clr:hover{background:var(--border)}
+    .sel-info{font-size:0.62rem;color:var(--text-3);font-family:'Space Mono',monospace}
 
-      /* log */
-      #log {
-        font-family: "JetBrains Mono", monospace;
-        font-size: 0.64rem;
-        height: 110px;
-        overflow-y: auto;
-        background: #f8f5ff;
-        border-radius: 10px;
-        padding: 9px 11px;
-        border: 1px solid #e8dff8;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-      }
-      #log::-webkit-scrollbar {
-        width: 3px;
-      }
-      #log::-webkit-scrollbar-thumb {
-        background: #e0d4f7;
-        border-radius: 3px;
-      }
-      .le {
-        display: flex;
-        gap: 9px;
-        opacity: 0;
-        animation: fin 0.25s forwards;
-      }
-      @keyframes fin {
-        to {
-          opacity: 1;
-        }
-      }
-      .lt {
-        color: #b8a8d0;
-        flex-shrink: 0;
-      }
-      .lk {
-        color: #6b4fa0;
-        flex-shrink: 0;
-        font-weight: 500;
-      }
-      .lm {
-        color: #7a6a96;
-      }
-      .lm.on-txt {
-        color: #2a7a55;
-      }
-      .lm.muted {
-        color: #b8a8d0;
-      }
+    .tbl-wrap{overflow-x:auto;border-radius:12px;border:2px solid var(--border);max-height:280px;overflow-y:auto}
+    .tbl-wrap::-webkit-scrollbar{width:4px}
+    .tbl-wrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+    table{width:100%;border-collapse:collapse;font-size:0.71rem;font-family:'Space Mono',monospace}
+    thead{position:sticky;top:0;z-index:1}
+    thead tr{background:var(--bg)}
+    thead th{
+      padding:10px 12px;text-align:left;font-size:0.57rem;font-weight:700;
+      text-transform:uppercase;letter-spacing:1.5px;color:var(--text-3);
+      white-space:nowrap;border-bottom:2px solid var(--border);
+    }
+    thead th:first-child{width:36px;text-align:center}
+    tbody tr{border-bottom:1px solid var(--bg);transition:background 0.12s;cursor:pointer}
+    tbody tr:last-child{border-bottom:none}
+    tbody tr:hover{background:#FFF9F5}
+    tbody tr.selected{background:var(--teal-lt)!important}
+    td{padding:9px 12px;color:var(--text-2);vertical-align:middle}
+    td.suhu-cell{color:var(--coral-dk);font-weight:700}
+    td.hum-cell{color:var(--sky)}
+    .bt{color:#9A6500;background:var(--gold-lt);border-radius:8px;font-size:0.58rem;padding:3px 9px;display:inline-block;font-weight:700}
+    .bg2b{color:#3A8AC4;background:var(--sky-lt);border-radius:8px;font-size:0.58rem;padding:3px 9px;display:inline-block;font-weight:700}
+    .no-data{text-align:center;padding:24px;color:var(--text-3);font-size:0.72rem}
+    .cb-col{width:32px;text-align:center}
+    input[type="checkbox"]{accent-color:var(--teal-dk);width:13px;height:13px;cursor:pointer}
 
-      /* table */
-      .tbl-wrap {
-        overflow-x: auto;
-        border-radius: 10px;
-        border: 1px solid #e8dff8;
-        max-height: 320px;
-        overflow-y: auto;
-      }
-      .tbl-wrap::-webkit-scrollbar {
-        width: 3px;
-      }
-      .tbl-wrap::-webkit-scrollbar-thumb {
-        background: #e0d4f7;
-        border-radius: 3px;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.72rem;
-        font-family: "JetBrains Mono", monospace;
-      }
-      thead {
-        position: sticky;
-        top: 0;
-        z-index: 1;
-      }
-      thead tr {
-        background: #f3eeff;
-      }
-      thead th {
-        padding: 9px 10px;
-        text-align: left;
-        font-size: 0.59rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-        color: #9b86c0;
-        white-space: nowrap;
-        border-bottom: 1px solid #e8dff8;
-      }
-      thead th:first-child {
-        width: 36px;
-        text-align: center;
-      }
-      tbody tr {
-        border-bottom: 1px solid #f3eeff;
-        transition: background 0.15s;
-        cursor: pointer;
-      }
-      tbody tr:last-child {
-        border-bottom: none;
-      }
-      tbody tr:hover {
-        background: #fbf9ff;
-      }
-      tbody tr.selected {
-        background: #eeebfa !important;
-      }
-      td {
-        padding: 8px 10px;
-        color: #5a4a7a;
-        vertical-align: middle;
-      }
-      td.suhu-cell {
-        color: #6b4fa0;
-        font-weight: 600;
-      }
-      td.hum-cell {
-        color: #9b7ec8;
-      }
-      .bt {
-        color: #9a6500;
-        background: #fff8e0;
-        border-radius: 6px;
-        font-size: 0.6rem;
-        padding: 2px 8px;
-        display: inline-block;
-      }
-      .bg {
-        color: #6b4fa0;
-        background: #eeebfa;
-        border-radius: 6px;
-        font-size: 0.6rem;
-        padding: 2px 8px;
-        display: inline-block;
-      }
-      .no-data {
-        text-align: center;
-        padding: 22px;
-        color: #c8b8e8;
-        font-size: 0.72rem;
-      }
+    /* ===================== CONNECT BTN ===================== */
+    #btn{
+      display:block;width:100%;margin-top:14px;
+      padding:14px;
+      background:linear-gradient(135deg,var(--teal),var(--teal-dk));
+      border:none;color:#fff;
+      font-family:'Nunito',sans-serif;font-size:0.95rem;font-weight:800;
+      border-radius:14px;cursor:pointer;transition:all 0.2s;letter-spacing:0.3px;
+      box-shadow:0 6px 20px rgba(46,196,182,0.35);
+    }
+    #btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(46,196,182,0.4)}
+    #btn:active{transform:scale(0.99)}
+    #btn.disc{background:var(--white);color:var(--coral-dk);border:2px solid #FFBCBC;box-shadow:none}
+    #btn.disc:hover{background:var(--coral-lt);transform:none}
+    #btn:disabled{opacity:0.45;cursor:not-allowed;transform:none;box-shadow:none}
 
-      /* checkbox col */
-      .cb-col {
-        width: 32px;
-        text-align: center;
-      }
-      input[type="checkbox"] {
-        accent-color: #6b4fa0;
-        width: 13px;
-        height: 13px;
-        cursor: pointer;
-      }
+    /* ===================== ALERT ===================== */
+    .alert-box{
+      position:fixed;bottom:24px;right:24px;
+      padding:12px 20px;border-radius:12px;color:#fff;
+      font-weight:800;font-size:0.82rem;z-index:9990;
+      animation:slideUp 0.3s ease;box-shadow:0 8px 24px rgba(0,0,0,0.18);
+      font-family:'Nunito',sans-serif;
+    }
+    .alert-green{background:linear-gradient(135deg,#69DB7C,#40C05A)}
+    .alert-yellow{background:linear-gradient(135deg,var(--gold),var(--gold-dk))}
+    .alert-red{background:linear-gradient(135deg,var(--coral),var(--coral-dk))}
+    @keyframes slideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 
-      /* table toolbar */
-      .tbl-toolbar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 12px;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-      .tbl-actions {
-        display: flex;
-        gap: 7px;
-        flex-wrap: wrap;
-      }
-      .tbtn {
-        font-size: 0.65rem;
-        font-family: "Inter", sans-serif;
-        font-weight: 600;
-        padding: 5px 13px;
-        border-radius: 8px;
-        cursor: pointer;
-        border: 1px solid;
-        transition: all 0.15s;
-        white-space: nowrap;
-      }
-      .tbtn-del {
-        background: #fff0ef;
-        border-color: #f5b8b3;
-        color: #c0392b;
-      }
-      .tbtn-del:hover {
-        background: #ffe5e3;
-      }
-      .tbtn-del:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-      }
-      .tbtn-csv {
-        background: #eaf7f1;
-        border-color: #a8dfc5;
-        color: #2a7a55;
-      }
-      .tbtn-csv:hover {
-        background: #d8f2e7;
-      }
-      .tbtn-clr {
-        background: #f3eeff;
-        border-color: #e0d4f7;
-        color: #9b86c0;
-      }
-      .tbtn-clr:hover {
-        background: #ece4fc;
-      }
-      .sel-info {
-        font-size: 0.62rem;
-        color: #9b86c0;
-        font-family: "JetBrains Mono", monospace;
-      }
+    /* ===================== RESPONSIVE ===================== */
+    @media(max-width:860px){
+      .hero-strip{grid-template-columns:1fr 1fr}
+      .row2{grid-template-columns:1fr 1fr}
+      .led-grid{grid-template-columns:repeat(2,1fr)}
+      .stats-row{grid-template-columns:1fr 1fr}
+    }
+    @media(max-width:540px){
+      .hero-strip{grid-template-columns:1fr 1fr}
+      .row2{grid-template-columns:1fr}
+      .led-grid{grid-template-columns:repeat(2,1fr)}
+      .stats-row{grid-template-columns:1fr}
+      .topbar{padding:0 16px}
+    }
+  </style>
+</head>
+<body>
 
-      /* main btn */
-      #btn {
-        display: block;
-        width: 100%;
-        margin-top: 10px;
-        padding: 13px;
-        background: #6b4fa0;
-        border: none;
-        color: #fff;
-        font-family: "Inter", sans-serif;
-        font-size: 0.9rem;
-        font-weight: 600;
-        border-radius: 13px;
-        cursor: pointer;
-        transition: all 0.2s;
-        letter-spacing: 0.3px;
-      }
-      #btn:hover {
-        background: #5c3d90;
-        transform: translateY(-1px);
-        box-shadow: 0 5px 18px rgba(107, 79, 160, 0.25);
-      }
-      #btn:active {
-        transform: scale(0.99);
-      }
-      #btn.disc {
-        background: #fff;
-        color: #c0392b;
-        border: 1px solid #f5b8b3;
-      }
-      #btn.disc:hover {
-        background: #fff0ef;
-        box-shadow: none;
-        transform: none;
-      }
-      #btn:disabled {
-        opacity: 0.45;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-      }
+<!-- ========== SPLASH ========== -->
+<div id="splash">
+  <div class="sp-icon">
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+      <path d="M16 4L9 17h6l-2 11L23 15h-6l2-11z" fill="#fff"/>
+    </svg>
+  </div>
+  <div class="sp-eyebrow">Proyek Akhir · SMK IoT</div>
+  <div class="sp-title">IoT Monitor<br/>Dashboard</div>
+  <div class="sp-sub">Suhu · Kelembaban · Pencahayaan<br/>via ESP32 &amp; HiveMQ</div>
+  <div class="sp-divider"></div>
+  <div class="sp-by">✦ KELOMPOK 6 ✦</div>
+  <button class="sp-btn" onclick="enterDashboard()">Buka Dashboard →</button>
+  <div class="sp-chips">
+    <span class="sp-chip">ESP32</span>
+    <span class="sp-chip">MQTT</span>
+    <span class="sp-chip">DHT11</span>
+    <span class="sp-chip">LDR</span>
+  </div>
+</div>
 
-      /* mode badge */
-      #mode-badge.auto {
-        background: #e8f4ff;
-        border-color: #90c8f0;
-        color: #1a6fa0;
-      }
-      #mode-badge.auto #mode-dot {
-        background: #3aabf0;
-      }
-      #mode-badge.manual {
-        background: #fff8e0;
-        border-color: #f0d090;
-        color: #9a6500;
-      }
-      #mode-badge.manual #mode-dot {
-        background: #f1c40f;
-        animation: pulse 1s infinite;
-      }
+<!-- ========== APP ========== -->
+<div id="app" style="display:none">
 
-      /* alert toast */
-      .alert-box {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 12px 18px;
-        border-radius: 10px;
-        color: #fff;
-        font-weight: 600;
-        font-size: 0.82rem;
-        z-index: 9990;
-        animation: slideIn 0.3s ease;
-      }
-      .alert-green {
-        background: #2ecc71;
-      }
-      .alert-yellow {
-        background: #f1c40f;
-        color: #333;
-      }
-      .alert-red {
-        background: #e74c3c;
-      }
-      @keyframes slideIn {
-        from {
-          opacity: 0;
-          transform: translateY(-12px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      @media (max-width: 580px) {
-        .g21,
-        .g2,
-        .g4,
-        .g3s {
-          grid-template-columns: 1fr 1fr;
-        }
-        .g4 {
-          grid-template-columns: repeat(2, 1fr);
-        }
-      }
-      @media (max-width: 380px) {
-        .g21,
-        .g2,
-        .g3s {
-          grid-template-columns: 1fr;
-        }
-        .g4 {
-          grid-template-columns: repeat(2, 1fr);
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <!-- ============================================================
-     SPLASH SCREEN
-============================================================ -->
-    <div id="splash">
-      <div class="splash-tag">Proyek Akhir · SMK IoT</div>
-
-      <div class="splash-glow">
-        <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
-          <circle cx="28" cy="28" r="20" stroke="rgba(255,255,255,0.35)" stroke-width="2" />
-          <circle cx="28" cy="28" r="10" fill="rgba(255,255,255,0.15)" />
-          <circle cx="28" cy="10" r="3.5" fill="rgba(255,255,255,0.85)" />
-          <circle cx="46.4" cy="19" r="3.5" fill="rgba(255,255,255,0.55)" />
-          <circle cx="46.4" cy="37" r="3.5" fill="rgba(255,255,255,0.55)" />
-          <circle cx="28" cy="46" r="3.5" fill="rgba(255,255,255,0.55)" />
-          <circle cx="9.6" cy="37" r="3.5" fill="rgba(255,255,255,0.55)" />
-          <circle cx="9.6" cy="19" r="3.5" fill="rgba(255,255,255,0.55)" />
-          <path d="M30 16L20 30h8l-2 10 10-14h-8l2-10z" fill="rgba(255,255,255,0.9)" />
+  <header class="topbar">
+    <div class="tb-left">
+      <div class="tb-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <circle cx="10" cy="10" r="7" stroke="rgba(255,255,255,0.6)" stroke-width="1.5"/>
+          <circle cx="10" cy="10" r="3" fill="rgba(255,255,255,0.9)"/>
+          <circle cx="10" cy="3.5" r="1.4" fill="#fff"/>
+          <circle cx="16" cy="13" r="1.4" fill="rgba(255,255,255,0.7)"/>
+          <circle cx="4" cy="13" r="1.4" fill="rgba(255,255,255,0.7)"/>
         </svg>
       </div>
+      <div>
+        <div class="tb-title">ESP32 IoT Dashboard</div>
+        <div class="tb-sub">smk/iot/sensor/pratiwi · HiveMQ Cloud · Kelompok 6</div>
+      </div>
+    </div>
+    <div class="tb-right">
+      <div id="badge"><div id="dot"></div><span id="btext">DISCONNECTED</span></div>
+    </div>
+  </header>
 
-      <div class="splash-title">IoT Monitor <span>Suhu, Kelembaban</span><br />dan Pencahayaan</div>
+  <div class="page">
 
-      <div class="splash-divider"></div>
-
-      <div class="splash-sub">Dibuat oleh</div>
-      <div class="splash-author">✦ Wahyu Pratiwi ✦</div>
-
-      <button class="splash-btn" onclick="enterDashboard()">Buka Dashboard →</button>
-
-      <div class="splash-dots"><span></span><span></span><span></span></div>
+    <!-- ======= HERO STRIP: 4 BIG STATS ======= -->
+    <div class="hero-strip">
+      <div class="hero-card hc-coral">
+        <div class="hc-label">🌡 Suhu</div>
+        <div>
+          <span class="hc-val" id="sv">--</span>
+          <span class="hc-unit">°C</span>
+        </div>
+        <div class="hc-bar"><div class="hc-fill" id="sb"></div></div>
+        <div class="hc-sub">Range: 0 – 50 °C</div>
+      </div>
+      <div class="hero-card hc-teal">
+        <div class="hc-label">💧 Kelembapan</div>
+        <div>
+          <span class="hc-val" id="hv">--</span>
+          <span class="hc-unit">%</span>
+        </div>
+        <div class="hc-bar"><div class="hc-fill" id="hb"></div></div>
+        <div class="hc-sub">Range: 0 – 100 %</div>
+      </div>
+      <div class="hero-card hc-gold">
+        <div class="hc-label">☀️ Cahaya</div>
+        <div class="hc-val" id="ldr-hero" style="font-size:1.35rem;margin-top:4px">--</div>
+        <div class="hc-sub" id="ldr-hero-sub">Menunggu data...</div>
+      </div>
+      <div class="hero-card hc-sky">
+        <div class="hc-label">📡 Mode</div>
+        <div class="hc-val" id="mode-hero" style="font-size:1.3rem;margin-top:4px">--</div>
+        <div class="hc-sub" id="mode-hero-sub">Menunggu koneksi...</div>
+      </div>
     </div>
 
-    <!-- ============================================================
-     MAIN APP
-============================================================ -->
-    <div class="wrap" id="app" style="display: none">
-      <header>
-        <div class="brand">
-          <div class="bdot">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <circle cx="9" cy="9" r="4" fill="#ddd0f8" />
-              <circle cx="9" cy="9" r="7" stroke="#c8b4e8" stroke-width="1.5" fill="none" />
-              <circle cx="9" cy="3.5" r="1.2" fill="#fff" />
-              <circle cx="14.2" cy="11.8" r="1.2" fill="#fff" />
-              <circle cx="3.8" cy="11.8" r="1.2" fill="#fff" />
-            </svg>
-          </div>
-          <div>
-            <div class="btitle">ESP32 IoT Dashboard</div>
-            <div class="bsub">smk/iot/sensor/pratiwi · HiveMQ Cloud</div>
-          </div>
+    <!-- ======= ROW 2: STATUS + MODE + LDR DETAIL ======= -->
+    <div class="row2">
+      <!-- System Status -->
+      <div class="card">
+        <div class="card-label">Status Sistem</div>
+        <div class="sys-display">
+          <div class="sys-orb" id="sys-orb">⚡</div>
+          <div class="sys-label" id="sval">STANDBY</div>
+          <div class="sys-note" id="snote">Menunggu data dari ESP32...</div>
         </div>
-        <div id="badge">
-          <div id="dot"></div>
-          <span id="btext">DISCONNECTED</span>
-        </div>
-      </header>
+      </div>
 
-      <!-- ROW 1 -->
-      <div class="g21">
-        <div class="card">
-          <div class="clabel">Status sistem</div>
-          <div class="sys-row">
-            <div class="sring" id="sring">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" fill="#ddd0f8" stroke="#9b7ec8" stroke-width="1.3" stroke-linejoin="round" />
-              </svg>
-            </div>
+      <!-- Mode detail -->
+      <div class="card">
+        <div class="card-label">Mode Operasi</div>
+        <div class="mode-display">
+          <div class="mode-pill" id="mode-badge">
+            <span class="mode-pill-dot" id="mode-dot"></span>
             <div>
-              <div class="sval" id="sval">STANDBY</div>
-              <div class="snote" id="snote">Menunggu data dari ESP32...</div>
+              <div class="mode-pill-text" id="mode-text">MODE: —</div>
+              <div class="mode-hint" id="mode-hint">Menunggu data...</div>
             </div>
           </div>
-        </div>
-        <div class="card">
-          <div class="clabel">Cahaya — LDR</div>
-          <div class="ldr-row">
-            <div class="ldrbox" id="lbox"><span id="lico" style="font-size: 20px">💡</span></div>
-            <div class="ldrpill" id="lpill">Menunggu</div>
+          <!-- update terakhir -->
+          <div style="background:var(--bg2);border:2px solid var(--border);border-radius:12px;padding:10px 12px">
+            <div style="font-family:'Space Mono',monospace;font-size:0.53rem;color:var(--text-3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">Update Terakhir</div>
+            <div style="font-family:'Space Mono',monospace;font-size:0.85rem;color:var(--teal-dk);font-weight:700" id="lu">—</div>
           </div>
         </div>
       </div>
 
-      <!-- ROW 2 -->
-      <div class="g2">
-        <div class="card">
-          <div class="clabel">Suhu — DHT11</div>
-          <div class="sensor-row">
-            <div class="snum" id="sv">--</div>
-            <div class="sunit">°C</div>
-          </div>
-          <div class="sbar"><div class="sfill" id="sb"></div></div>
-          <div class="shint">0 – 50 °C</div>
-        </div>
-        <div class="card">
-          <div class="clabel">Kelembapan — DHT11</div>
-          <div class="sensor-row">
-            <div class="snum" id="hv">--</div>
-            <div class="sunit">%</div>
-          </div>
-          <div class="sbar"><div class="sfill" id="hb" style="background: #c8b4e8"></div></div>
-          <div class="shint">0 – 100%</div>
+      <!-- LDR visual -->
+      <div class="card">
+        <div class="card-label">Sensor Cahaya — LDR</div>
+        <div class="ldr-big">
+          <div class="ldr-icon" id="lbox"><span id="lico" style="font-size:28px">💡</span></div>
+          <div class="ldr-badge" id="lpill">Menunggu Data</div>
         </div>
       </div>
-
-      <!-- MODE BADGE -->
-      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px">
-        <div
-          id="mode-badge"
-          style="
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-family: &quot;JetBrains Mono&quot;, monospace;
-            font-size: 0.65rem;
-            font-weight: 600;
-            padding: 5px 14px;
-            border-radius: 20px;
-            background: #f3eeff;
-            border: 1px solid #e0d4f7;
-            color: #b8a8d0;
-            transition: all 0.35s;
-            letter-spacing: 0.5px;
-          "
-        >
-          <span id="mode-dot" style="width: 7px; height: 7px; border-radius: 50%; background: #b8a8d0; flex-shrink: 0; transition: all 0.3s"></span>
-          <span id="mode-text">MODE: —</span>
-        </div>
-        <span style="font-size: 0.62rem; color: #b8a8d0; font-family: &quot;JetBrains Mono&quot;, monospace" id="mode-hint">Menunggu data...</span>
-      </div>
-
-      <!-- ROW 3: 4 LED -->
-      <div class="g4">
-        <div class="card led-card">
-          <div class="lorb" id="l1"></div>
-          <div>
-            <div class="lname">LED 1</div>
-            <div class="lstate" id="ls1">Padam</div>
-            <div class="lbadge" id="lb1">GPIO 2</div>
-          </div>
-        </div>
-        <div class="card led-card">
-          <div class="lorb" id="l2"></div>
-          <div>
-            <div class="lname">LED 2</div>
-            <div class="lstate" id="ls2">Padam</div>
-            <div class="lbadge" id="lb2">GPIO 18</div>
-          </div>
-        </div>
-        <div class="card led-card">
-          <div class="lorb" id="l3"></div>
-          <div>
-            <div class="lname">LED 3</div>
-            <div class="lstate" id="ls3">Padam</div>
-            <div class="lbadge" id="lb3">GPIO 19</div>
-          </div>
-        </div>
-        <div class="card led-card">
-          <div class="lorb" id="l4"></div>
-          <div>
-            <div class="lname">LED 4</div>
-            <div class="lstate" id="ls4">Padam</div>
-            <div class="lbadge" id="lb4">GPIO 21</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ROW 4: Stats -->
-      <div class="g3s">
-        <div class="card">
-          <div class="clabel">Total pesan</div>
-          <div class="stval" id="mc">0</div>
-          <div class="stunit">messages</div>
-        </div>
-        <div class="card">
-          <div class="clabel">Uptime</div>
-          <div class="stval" id="up">00:00</div>
-          <div class="stunit">mm : ss</div>
-        </div>
-        <div class="card">
-          <div class="clabel">Update terakhir</div>
-          <div class="stval" id="lu" style="font-size: 0.85rem; padding-top: 3px">—</div>
-          <div class="stunit">timestamp</div>
-        </div>
-      </div>
-
-      <!-- LOG -->
-      <div class="card" style="margin-bottom: 14px">
-        <div class="clabel">Log MQTT</div>
-        <div id="log">
-          <div class="le"><span class="lt">--:--:--</span><span class="lm muted">Tekan Connect untuk mulai menerima data.</span></div>
-        </div>
-      </div>
-
-      <!-- TABLE -->
-      <div class="card" style="margin-bottom: 12px">
-        <div class="tbl-toolbar">
-          <div class="clabel" style="margin-bottom: 0">Riwayat data sensor</div>
-          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
-            <span class="sel-info" id="sel-info"></span>
-            <div class="tbl-actions">
-              <button class="tbtn tbtn-del" id="del-btn" onclick="deleteSelected()" disabled>Hapus Terpilih</button>
-              <button class="tbtn tbtn-csv" onclick="exportCSV()">Export CSV</button>
-              <button class="tbtn tbtn-clr" onclick="clearAll()">Hapus Semua</button>
-            </div>
-          </div>
-        </div>
-        <div class="tbl-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th class="cb-col"><input type="checkbox" id="chk-all" onchange="toggleAll(this)" /></th>
-                <th>#</th>
-                <th>Waktu</th>
-                <th>Suhu (°C)</th>
-                <th>Kelembapan (%)</th>
-                <th>Cahaya</th>
-                <th>LED aktif</th>
-              </tr>
-            </thead>
-            <tbody id="tbl-body">
-              <tr>
-                <td colspan="7" class="no-data">Belum ada data diterima.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <button id="btn" onclick="toggle()">Hubungkan ke MQTT</button>
     </div>
-    <!-- end .wrap -->
 
-    <script>
-      /* =====================================================================
-               SPLASH
-            ===================================================================== */
-      function enterDashboard() {
-        document.getElementById("splash").classList.add("hide");
-        document.getElementById("app").style.display = "block";
-        setTimeout(() => (document.getElementById("splash").style.display = "none"), 650);
-      }
+    <!-- ======= LED SECTION ======= -->
+    <div class="section-title">Output LED — ESP32</div>
+    <div class="led-grid led-section">
+      <div class="led-tile" id="tile1">
+        <div class="lorb" id="l1"></div>
+        <div class="lname">LED 1</div>
+        <div class="lstate" id="ls1">Padam</div>
+        <div class="lbadge" id="lb1">GPIO 2</div>
+      </div>
+      <div class="led-tile" id="tile2">
+        <div class="lorb" id="l2"></div>
+        <div class="lname">LED 2</div>
+        <div class="lstate" id="ls2">Padam</div>
+        <div class="lbadge" id="lb2">GPIO 18</div>
+      </div>
+      <div class="led-tile" id="tile3">
+        <div class="lorb" id="l3"></div>
+        <div class="lname">LED 3</div>
+        <div class="lstate" id="ls3">Padam</div>
+        <div class="lbadge" id="lb3">GPIO 19</div>
+      </div>
+      <div class="led-tile" id="tile4">
+        <div class="lorb" id="l4"></div>
+        <div class="lname">LED 4</div>
+        <div class="lstate" id="ls4">Padam</div>
+        <div class="lbadge" id="lb4">GPIO 21</div>
+      </div>
+    </div>
 
-      /* =====================================================================
-               CONFIG
-            ===================================================================== */
-      const BROKER = "cda01f055ad244f08168d0a5b265ab32.s1.eu.hivemq.cloud";
-      const PORT = 8884;
-      const USERNAME = "orangsukses";
-      const PASSWORD = "Kelompok6";
-      const TOPIC = "smk/iot/sensor/pratiwi";
-      const STORAGE_KEY = "iot_history_pratiwi";
-      const MAX_ROWS = 200;
+    <!-- ======= STATS ======= -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="card-label">Total Pesan</div>
+        <div class="stat-val" id="mc">0</div>
+        <div class="stat-unit">messages received</div>
+      </div>
+      <div class="stat-card">
+        <div class="card-label">Uptime</div>
+        <div class="stat-val" id="up">00:00</div>
+        <div class="stat-unit">menit : detik</div>
+      </div>
+      <div class="stat-card">
+        <div class="card-label">Koneksi</div>
+        <div class="stat-val" id="conn-host" style="font-size:0.75rem;color:var(--text-3);margin-top:4px;line-height:1.5">HiveMQ Cloud</div>
+        <div class="stat-unit">broker</div>
+      </div>
+    </div>
 
-      /* =====================================================================
-               STATE
-            ===================================================================== */
-      let cl = null,
-        conn = false,
-        mc = 0,
-        st = null,
-        ui = null;
-      let lastStatus = "",
-        offTimer = null,
-        manualDisconnect = false;
-      let history = []; // [{id,ts,suhu,hum,cahaya,led}]
-      let nextId = 1;
+    <!-- ======= LOG ======= -->
+    <div class="log-card">
+      <div class="card-label">Log MQTT</div>
+      <div id="log">
+        <div class="le"><span class="lt">--:--:--</span><span class="lm muted">Tekan Connect untuk mulai menerima data.</span></div>
+      </div>
+      <button id="btn" onclick="toggle()">🔌 Hubungkan ke MQTT</button>
+    </div>
 
-      let lastTableTime = 0;
-      const tableInterval = 3000;
+    <!-- ======= TABLE ======= -->
+    <div class="tbl-card">
+      <div class="tbl-toolbar">
+        <div class="card-label" style="margin-bottom:0">📋 Riwayat Data Sensor</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span class="sel-info" id="sel-info"></span>
+          <div class="tbl-actions">
+            <button class="tbtn tbtn-del" id="del-btn" onclick="deleteSelected()" disabled>Hapus Terpilih</button>
+            <button class="tbtn tbtn-csv" onclick="exportCSV()">Export CSV</button>
+            <button class="tbtn tbtn-clr" onclick="clearAll()">Hapus Semua</button>
+          </div>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="cb-col"><input type="checkbox" id="chk-all" onchange="toggleAll(this)"/></th>
+              <th>#</th><th>Waktu</th><th>Suhu (°C)</th><th>Kelembapan (%)</th><th>Cahaya</th><th>LED Aktif</th>
+            </tr>
+          </thead>
+          <tbody id="tbl-body">
+            <tr><td colspan="7" class="no-data">Belum ada data diterima.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-      /* =====================================================================
-               LOCALSTORAGE
-            ===================================================================== */
-      function saveHistory() {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify({ rows: history, nextId }));
-        } catch (e) {}
-      }
-      function loadHistory() {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (!raw) return;
-          const obj = JSON.parse(raw);
-          history = obj.rows || [];
-          nextId = obj.nextId || history.length + 1;
-          rebuildTable();
-          updateSelInfo();
-        } catch (e) {}
-      }
+  </div><!-- end .page -->
+</div><!-- end #app -->
 
-      /* =====================================================================
-               TABLE RENDERING
-            ===================================================================== */
-      function rebuildTable() {
-        const tb = document.getElementById("tbl-body");
-        tb.innerHTML = "";
-        if (history.length === 0) {
-          tb.innerHTML = '<tr><td colspan="7" class="no-data">Belum ada data diterima.</td></tr>';
-          document.getElementById("chk-all").checked = false;
-          document.getElementById("del-btn").disabled = true;
-          return;
-        }
-        history.forEach((r) => tb.appendChild(makeRow(r)));
-      }
+<script>
+/* ===== SPLASH ===== */
+function enterDashboard(){
+  document.getElementById('splash').classList.add('hide');
+  document.getElementById('app').style.display='block';
+  setTimeout(()=>document.getElementById('splash').style.display='none',550);
+}
 
-      function makeRow(r) {
-        const tr = document.createElement("tr");
-        tr.dataset.id = r.id;
-        const cb = `<td class="cb-col"><input type="checkbox" class="row-cb" data-id="${r.id}" onchange="onRowCheck()"></td>`;
-        const cahayaBadge = r.cahaya === "TERANG" ? `<span class="bt">Terang</span>` : `<span class="bg">Gelap</span>`;
-        tr.innerHTML = `${cb}
-                <td>${r.id}</td>
-                <td>${r.ts}</td>
-                <td class="suhu-cell">${r.suhu}</td>
-                <td class="hum-cell">${r.hum}</td>
-                <td>${cahayaBadge}</td>
-                <td>${r.led}</td>`;
-        tr.onclick = function (e) {
-          if (e.target.type === "checkbox") return;
-          const cb = tr.querySelector(".row-cb");
-          cb.checked = !cb.checked;
-          onRowCheck();
-        };
-        return tr;
-      }
+/* ===== CONFIG ===== */
+const BROKER='cda01f055ad244f08168d0a5b265ab32.s1.eu.hivemq.cloud';
+const PORT=8884,USERNAME='orangsukses',PASSWORD='Kelompok6';
+const TOPIC='smk/iot/sensor/pratiwi';
+const STORAGE_KEY='iot_history_pratiwi',MAX_ROWS=200;
 
-      function addTableRow(now, suhu, hum, cahaya, ledStr, mode) {
-        const names = ["LED1", "LED2", "LED3", "LED4"];
-        let aktif = [];
+/* ===== STATE ===== */
+let cl=null,conn=false,mc=parseInt(localStorage.getItem('msg_count'))||0;
+let st=null,ui=null,lastStatus='',manualDisconnect=false;
+let history=[],nextId=1,lastTableTime=0;
+const tableInterval=3000;
 
-        ledStr.split("").forEach((v, i) => {
-          if (v === "1") aktif.push(names[i]);
-        });
+/* ===== STORAGE ===== */
+function saveHistory(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({rows:history,nextId}));}catch(e){}}
+function loadHistory(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw)return;
+    const obj=JSON.parse(raw);
+    history=obj.rows||[];nextId=obj.nextId||history.length+1;
+    rebuildTable();
+    const lu=localStorage.getItem('last_update');
+    if(lu)document.getElementById('lu').textContent=lu;
+    updateSelInfo();
+    document.getElementById('mc').textContent=mc;
+    const last=localStorage.getItem('last_sensor');
+    if(last){const d=JSON.parse(last);if(d.suhu&&d.hum)updSensor(d.suhu,d.hum);if(d.cahaya)updLDR(d.cahaya);}
+  }catch(e){}
+}
 
-        let activeLED = aktif.length ? aktif.join(", ") : "-";
+/* ===== TABLE ===== */
+function rebuildTable(){
+  const tb=document.getElementById('tbl-body');tb.innerHTML='';
+  if(history.length===0){tb.innerHTML='<tr><td colspan="7" class="no-data">Belum ada data diterima.</td></tr>';document.getElementById('chk-all').checked=false;document.getElementById('del-btn').disabled=true;return;}
+  history.forEach(r=>tb.appendChild(makeRow(r)));
+}
+function makeRow(r){
+  const tr=document.createElement('tr');tr.dataset.id=r.id;
+  const cb=`<td class="cb-col"><input type="checkbox" class="row-cb" data-id="${r.id}" onchange="onRowCheck()"></td>`;
+  const badge=r.cahaya==='TERANG'?`<span class="bt">☀️ Terang</span>`:`<span class="bg2b">🌙 Gelap</span>`;
+  tr.innerHTML=`${cb}<td>${r.id}</td><td>${r.ts}</td><td class="suhu-cell">${r.suhu}</td><td class="hum-cell">${r.hum}</td><td>${badge}</td><td>${r.led}</td>`;
+  tr.onclick=function(e){if(e.target.type==='checkbox')return;const c=tr.querySelector('.row-cb');c.checked=!c.checked;onRowCheck();};
+  return tr;
+}
+function addTableRow(now,suhu,hum,cahaya,ledStr){
+  const names=['LED1','LED2','LED3','LED4'];let aktif=[];
+  if(ledStr)ledStr.split('').forEach((v,i)=>{if(v==='1')aktif.push(names[i]);});
+  const ts=now.toLocaleTimeString('id-ID',{hour12:false});
+  const row={id:nextId++,ts,suhu:suhu?suhu.toFixed(1):'-',hum:hum?hum.toFixed(1):'-',cahaya,led:aktif.length?aktif.join(', '):'-'};
+  history.unshift(row);if(history.length>MAX_ROWS)history=history.slice(0,MAX_ROWS);
+  const tb=document.getElementById('tbl-body');
+  const no=tb.querySelector('.no-data');if(no)no.parentElement.remove();
+  tb.insertBefore(makeRow(row),tb.firstChild);
+  while(tb.children.length>MAX_ROWS)tb.removeChild(tb.lastChild);
+  updateSelInfo();saveHistory();
+}
 
-        const ts = now.toLocaleTimeString("id-ID", { hour12: false });
+/* ===== CHECKBOX ===== */
+function onRowCheck(){
+  const cbs=[...document.querySelectorAll('.row-cb')];
+  const checked=cbs.filter(c=>c.checked);
+  document.getElementById('chk-all').checked=checked.length===cbs.length&&cbs.length>0;
+  document.getElementById('del-btn').disabled=checked.length===0;
+  document.querySelectorAll('#tbl-body tr[data-id]').forEach(tr=>{const c=tr.querySelector('.row-cb');tr.classList.toggle('selected',c&&c.checked);});
+  updateSelInfo();
+}
+function toggleAll(m){document.querySelectorAll('.row-cb').forEach(c=>c.checked=m.checked);onRowCheck();}
+function updateSelInfo(){
+  const cbs=[...document.querySelectorAll('.row-cb')];const n=cbs.filter(c=>c.checked).length;
+  const el=document.getElementById('sel-info');
+  el.textContent=history.length>0?(n>0?`${n} baris dipilih`:`${history.length} baris`):'';
+}
+function deleteSelected(){
+  const ids=new Set([...document.querySelectorAll('.row-cb:checked')].map(c=>+c.dataset.id));
+  if(ids.size===0)return;
+  history=history.filter(r=>!ids.has(r.id));
+  mc-=ids.size;if(mc<0)mc=0;
+  localStorage.setItem('msg_count',mc);document.getElementById('mc').textContent=mc;
+  saveHistory();rebuildTable();updateSelInfo();
+  document.getElementById('chk-all').checked=false;document.getElementById('del-btn').disabled=true;
+}
+function clearAll(){if(history.length===0)return;if(!confirm('Hapus semua riwayat data?'))return;history=[];nextId=1;saveHistory();rebuildTable();updateSelInfo();}
+function exportCSV(){
+  if(history.length===0){alert('Tidak ada data untuk diekspor.');return;}
+  const header=['#','Waktu','Suhu (°C)','Kelembapan (%)','Cahaya','LED Aktif'];
+  const rows=history.map(r=>[r.id,r.ts,r.suhu,r.hum,r.cahaya,r.led]);
+  const csv='data:text/csv;charset=utf-8,'+[header,...rows].map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');a.href=encodeURI(csv);
+  a.download=`iot-data-pratiwi-${new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')}.csv`;a.click();
+}
 
-        const row = {
-          id: nextId++,
-          ts,
-          suhu: suhu ? suhu.toFixed(1) : "-",
-          hum: hum ? hum.toFixed(1) : "-",
-          cahaya,
-          led: activeLED,
-        };
+/* ===== MQTT ===== */
+function toggle(){conn?doDisc():doConn();}
+function doConn(){
+  manualDisconnect=false;
+  const id='Web-'+Math.floor(Math.random()*9000+1000);
+  badge('connecting','CONNECTING...');btnDis(true);
+  cl=new Paho.Client(BROKER,PORT,'/mqtt',id);
+  cl.onConnectionLost=onLost;cl.onMessageArrived=onMsg;
+  cl.connect({userName:USERNAME,password:PASSWORD,useSSL:true,onSuccess:onConn,onFailure:onFail});
+}
+function doDisc(){if(cl&&conn){manualDisconnect=true;cl.disconnect();const b=document.getElementById('btn');b.textContent='🔌 Hubungkan ke MQTT';b.classList.remove('disc');b.disabled=false;badge('','DISCONNECTED');}}
+function onConn(){
+  conn=true;badge('connected','CONNECTED');
+  const b=document.getElementById('btn');b.disabled=false;b.textContent='⛔ Putuskan Koneksi';b.classList.add('disc');
+  cl.subscribe(TOPIC);addLog('SYS','Connected: '+BROKER);addLog('SYS','Topic: '+TOPIC);
+  st=Date.now();ui=setInterval(uptime,1000);
+}
+function onFail(e){badge('error','GAGAL');addLog('SYS','Error: '+e.errorMessage);btnDis(false);}
+function onLost(){
+  conn=false;badge('','DISCONNECTED');btnDis(false);
+  if(ui)clearInterval(ui);setSystemOff();
+  const b=document.getElementById('btn');b.textContent='🔌 Hubungkan ke MQTT';b.classList.remove('disc');
+  if(!manualDisconnect)setTimeout(doConn,3000);manualDisconnect=false;
+}
 
-        history.unshift(row);
-        if (history.length > MAX_ROWS) history = history.slice(0, MAX_ROWS);
+/* ===== DATA ===== */
+function onMsg(m){
+  const pl=m.payloadString.trim();
+  mc++;localStorage.setItem('msg_count',mc);document.getElementById('mc').textContent=mc;
+  const now=new Date();
+  const timeNow=now.toLocaleTimeString('id-ID',{hour12:false});
+  document.getElementById('lu').textContent=timeNow;localStorage.setItem('last_update',timeNow);
+  try{
+    const d=JSON.parse(pl);
+    const mode=(d.mode||'auto').toLowerCase();
+    const suhu=d.suhu!==undefined?parseFloat(d.suhu):null;
+    const hum=d.kelembapan!==undefined?parseFloat(d.kelembapan):null;
+    const cahaya=(d.cahaya||'').toUpperCase();
+    localStorage.setItem('last_sensor',JSON.stringify({suhu,hum,cahaya}));
+    updModeBadge(mode,suhu);
+    if(mode==='manual'){
+      const ledState=parseLedField(d.led);
+      addLog('MODE','MANUAL');
+      addLog('LED','L1:'+ledState[0]+' L2:'+ledState[1]+' L3:'+ledState[2]+' L4:'+ledState[3]);
+      updLEDsManual(ledState);setSystemManual();
+      if(suhu!==null&&hum!==null)updSensor(suhu,hum);
+      if(cahaya)updLDR(cahaya);
+      if(Date.now()-lastTableTime>=tableInterval){addTableRow(now,suhu,hum,cahaya,d.led);lastTableTime=Date.now();}
+    }else{
+      if(suhu===null||hum===null){addLog('ERR','Data tidak lengkap');return;}
+      addLog('SUHU',suhu.toFixed(1)+' °C');addLog('HUM',hum.toFixed(1)+' %');addLog('LDR',cahaya||'—');
+      setSystemOn(suhu);updSensor(suhu,hum);if(cahaya)updLDR(cahaya);
+      updLEDsAuto(suhu);cekAlert(suhu);
+      if(Date.now()-lastTableTime>=tableInterval){addTableRow(now,suhu,hum,cahaya,d.led);lastTableTime=Date.now();}
+    }
+  }catch(e){addLog('ERR','JSON Error: '+e.message);}
+}
 
-        const tb = document.getElementById("tbl-body");
-        const noRow = tb.querySelector(".no-data");
-        if (noRow) noRow.parentElement.remove();
+function parseLedField(led){
+  const s=[false,false,false,false];
+  if(led===undefined||led===null)return s;
+  if(Array.isArray(led)){led.forEach(n=>{if(n>=1&&n<=4)s[n-1]=true;});}
+  else if(typeof led==='string'&&/^[01]{4}$/.test(led)){for(let i=0;i<4;i++)s[i]=led[i]==='1';}
+  else if(typeof led==='number'){for(let i=0;i<4;i++)s[i]=!!(led&(1<<i));}
+  return s;
+}
 
-        tb.insertBefore(makeRow(row), tb.firstChild);
-        while (tb.children.length > MAX_ROWS) tb.removeChild(tb.lastChild);
+/* ===== ALERTS ===== */
+function cekAlert(suhu){
+  let status='';
+  if(suhu>=20&&suhu<=25){status='NORMAL';if(status!==lastStatus)showAlert('🟢 Suhu Normal (20–25°C)','green');}
+  else if(suhu<=30){status='SEDANG';if(status!==lastStatus)showAlert('🟡 Suhu Sedang (26–30°C)','yellow');}
+  else{status='PANAS';if(status!==lastStatus)showAlert('🔴 Suhu Panas (>30°C)','red');}
+  lastStatus=status;
+}
 
-        updateSelInfo();
-        saveHistory();
-      }
-      /* =====================================================================
-               CHECKBOX / SELECT
-            ===================================================================== */
-      function onRowCheck() {
-        const cbs = [...document.querySelectorAll(".row-cb")];
-        const checked = cbs.filter((c) => c.checked);
-        document.getElementById("chk-all").checked = checked.length === cbs.length && cbs.length > 0;
-        document.getElementById("del-btn").disabled = checked.length === 0;
-        const rows = document.querySelectorAll("#tbl-body tr[data-id]");
-        rows.forEach((tr) => {
-          const cb = tr.querySelector(".row-cb");
-          tr.classList.toggle("selected", cb && cb.checked);
-        });
-        updateSelInfo();
-      }
+/* ===== UI UPDATES ===== */
+function updModeBadge(mode,suhu){
+  const b=document.getElementById('mode-badge'),t=document.getElementById('mode-text'),h=document.getElementById('mode-hint');
+  const mh=document.getElementById('mode-hero'),ms=document.getElementById('mode-hero-sub');
+  b.className='mode-pill';
+  if(mode==='manual'){
+    b.classList.add('manual');t.textContent='MODE: MANUAL';h.textContent='LED dikontrol via tombol fisik';
+    mh.textContent='MANUAL';ms.textContent='Tombol fisik aktif';
+  }else{
+    b.classList.add('auto');t.textContent='MODE: AUTO';h.textContent=suhu!==null?'LED otomatis dari '+suhu.toFixed(1)+'°C':'LED dari sensor';
+    mh.textContent='AUTO';ms.textContent=suhu!==null?'Suhu: '+suhu.toFixed(1)+'°C':'Sensor aktif';
+  }
+}
+function setSystemOn(suhu){
+  document.getElementById('sys-orb').className='sys-orb on';
+  document.getElementById('sys-orb').textContent='✅';
+  const sv=document.getElementById('sval');sv.className='sys-label on';sv.textContent='AKTIF';
+  const s=suhu<=25?'NORMAL':suhu<=30?'SEDANG':'PANAS';
+  document.getElementById('snote').textContent='Status: '+s+' | '+suhu.toFixed(1)+'°C';
+}
+function setSystemManual(){
+  document.getElementById('sys-orb').className='sys-orb manual';
+  document.getElementById('sys-orb').textContent='🎛️';
+  const sv=document.getElementById('sval');sv.className='sys-label manual';sv.textContent='MANUAL';
+  document.getElementById('snote').textContent='Kontrol LED via tombol fisik';
+}
+function setSystemOff(){
+  document.getElementById('sys-orb').className='sys-orb';
+  document.getElementById('sys-orb').textContent='⚡';
+  const sv=document.getElementById('sval');sv.className='sys-label';sv.textContent='STANDBY';
+  document.getElementById('snote').textContent='Menunggu data dari ESP32...';
+  const mb=document.getElementById('mode-badge');mb.className='mode-pill';
+  document.getElementById('mode-text').textContent='MODE: —';
+  document.getElementById('mode-hint').textContent='Menunggu data...';
+  document.getElementById('mode-hero').textContent='--';
+  document.getElementById('mode-hero-sub').textContent='Menunggu koneksi...';
+}
+function updSensor(suhu,hum){
+  document.getElementById('sv').textContent=suhu.toFixed(1);
+  document.getElementById('hv').textContent=hum.toFixed(1);
+  document.getElementById('sb').style.width=Math.min(100,(suhu/50)*100)+'%';
+  document.getElementById('hb').style.width=Math.min(100,hum)+'%';
+}
+function updLDR(v){
+  const bx=document.getElementById('lbox'),ic=document.getElementById('lico'),pl=document.getElementById('lpill');
+  const lh=document.getElementById('ldr-hero'),ls=document.getElementById('ldr-hero-sub');
+  if(v==='TERANG'){
+    bx.className='ldr-icon terang';ic.textContent='☀️';pl.className='ldr-badge terang';pl.textContent='Terang';
+    lh.textContent='TERANG';ls.textContent='Kondisi siang / cahaya';
+  }else{
+    bx.className='ldr-icon gelap';ic.textContent='🌙';pl.className='ldr-badge gelap';pl.textContent='Gelap';
+    lh.textContent='GELAP';ls.textContent='Kondisi malam / redup';
+  }
+}
+function updLEDsAuto(suhu){
+  resetAllLED();
+  ['lb1','lb2','lb3','lb4'].forEach((id,i)=>{
+    document.getElementById(id).textContent=['20–25°C','26–30°C','≥30°C','Indikator'][i];
+    document.getElementById(id).className='lbadge';
+  });
+  if(suhu>=20&&suhu<=25)setLEDColor('l1','ls1','green','Menyala','tile1','green');
+  else if(suhu>=26&&suhu<=30)setLEDColor('l2','ls2','yellow','Menyala','tile2','yellow');
+  else if(suhu>=30)setLEDColor('l3','ls3','red','Menyala','tile3','red');
+  document.getElementById('l4').className='lorb green';
+  document.getElementById('ls4').textContent='Aktif';document.getElementById('ls4').className='lstate on';
+  document.getElementById('lb4').className='lbadge active';
+  document.getElementById('tile4').className='led-tile glow-green';
+}
+function updLEDsManual(state){
+  const colors=['green','yellow','red','green'];
+  ['lb1','lb2','lb3','lb4'].forEach((id,i)=>{document.getElementById(id).textContent='BTN '+(i+1);document.getElementById(id).className='lbadge';});
+  state.forEach((on,i)=>{
+    const oid='l'+(i+1),sid='ls'+(i+1),tid='tile'+(i+1);
+    if(on){setLEDColor(oid,sid,colors[i],'Menyala',tid,colors[i]);document.getElementById('lb'+(i+1)).className='lbadge active';}
+    else{document.getElementById(oid).className='lorb';document.getElementById(sid).textContent='Padam';document.getElementById(sid).className='lstate';document.getElementById(tid).className='led-tile';}
+  });
+}
+function setLEDColor(id,label,color,text,tile,tileColor){
+  document.getElementById(id).className='lorb '+color;
+  document.getElementById(label).textContent=text;
+  document.getElementById(label).className='lstate on';
+  if(tile)document.getElementById(tile).className='led-tile glow-'+tileColor;
+}
+function resetAllLED(){
+  ['l1','l2','l3','l4'].forEach(id=>document.getElementById(id).className='lorb');
+  ['ls1','ls2','ls3','ls4'].forEach(id=>{document.getElementById(id).textContent='Padam';document.getElementById(id).className='lstate';});
+  ['tile1','tile2','tile3','tile4'].forEach(id=>document.getElementById(id).className='led-tile');
+}
 
-      function toggleAll(master) {
-        document.querySelectorAll(".row-cb").forEach((cb) => (cb.checked = master.checked));
-        onRowCheck();
-      }
+/* ===== UTIL ===== */
+function badge(cls,txt){document.getElementById('badge').className=cls;document.getElementById('btext').textContent=txt;}
+function btnDis(d){document.getElementById('btn').disabled=d;}
+function addLog(tp,msg){
+  const el=document.getElementById('log'),t=new Date().toLocaleTimeString('id-ID',{hour12:false});
+  const d=document.createElement('div');d.className='le';
+  const cls=msg.includes('TERANG')||msg.includes('AKTIF')?'on-txt':msg.includes('GELAP')||msg.includes('STANDBY')?'muted':'';
+  d.innerHTML=`<span class="lt">${t}</span> <span class="lk">[${tp}]</span> <span class="lm ${cls}">${msg}</span>`;
+  el.appendChild(d);el.scrollTop=el.scrollHeight;
+  while(el.children.length>120)el.removeChild(el.firstChild);
+}
+function uptime(){if(!st)return;const s=Math.floor((Date.now()-st)/1000);document.getElementById('up').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+function showAlert(text,type){const div=document.createElement('div');div.className='alert-box alert-'+type;div.innerText=text;document.body.appendChild(div);setTimeout(()=>div.remove(),3000);}
 
-      function updateSelInfo() {
-        const cbs = [...document.querySelectorAll(".row-cb")];
-        const n = cbs.filter((c) => c.checked).length;
-        const el = document.getElementById("sel-info");
-        el.textContent = history.length > 0 ? (n > 0 ? `${n} baris dipilih` : `${history.length} baris`) : "";
-      }
-
-      /* =====================================================================
-               DELETE SELECTED
-            ===================================================================== */
-      function deleteSelected() {
-        const selectedIds = new Set([...document.querySelectorAll(".row-cb:checked")].map((c) => +c.dataset.id));
-        if (selectedIds.size === 0) return;
-        history = history.filter((r) => !selectedIds.has(r.id));
-        saveHistory();
-        rebuildTable();
-        updateSelInfo();
-        document.getElementById("chk-all").checked = false;
-        document.getElementById("del-btn").disabled = true;
-      }
-
-      /* =====================================================================
-               CLEAR ALL
-            ===================================================================== */
-      function clearAll() {
-        if (history.length === 0) return;
-        if (!confirm("Hapus semua riwayat data?")) return;
-        history = [];
-        nextId = 1;
-        saveHistory();
-        rebuildTable();
-        updateSelInfo();
-      }
-
-      /* =====================================================================
-               EXPORT CSV
-            ===================================================================== */
-      function exportCSV() {
-        if (history.length === 0) {
-          alert("Tidak ada data untuk diekspor.");
-          return;
-        }
-        const header = ["#", "Waktu", "Suhu (°C)", "Kelembapan (%)", "Cahaya", "LED Aktif"];
-        const rows = history.map((r) => [r.id, r.ts, r.suhu, r.hum, r.cahaya, r.led]);
-        const csvContent = "data:text/csv;charset=utf-8," + [header, ...rows].map((r) => r.join(",")).join("\n");
-        const a = document.createElement("a");
-        a.href = encodeURI(csvContent);
-        const now = new Date();
-        const stamp = now.toISOString().slice(0, 16).replace(/[:T]/g, "-");
-        a.download = `iot-data-pratiwi-${stamp}.csv`;
-        a.click();
-      }
-
-      /* =====================================================================
-               MQTT CONNECT
-            ===================================================================== */
-      function toggle() {
-        conn ? doDisc() : doConn();
-      }
-
-      function doConn() {
-        manualDisconnect = false;
-        const id = "Web-" + Math.floor(Math.random() * 9000 + 1000);
-        badge("connecting", "CONNECTING...");
-        btnDis(true);
-        cl = new Paho.Client(BROKER, PORT, "/mqtt", id);
-        cl.onConnectionLost = onLost;
-        cl.onMessageArrived = onMsg;
-        cl.connect({ userName: USERNAME, password: PASSWORD, useSSL: true, onSuccess: onConn, onFailure: onFail });
-      }
-
-      function doDisc() {
-        if (cl && conn) {
-          manualDisconnect = true;
-          cl.disconnect();
-          const b = document.getElementById("btn");
-          b.textContent = "Hubungkan ke MQTT";
-          b.classList.remove("disc");
-          b.disabled = false;
-          badge("", "DISCONNECTED");
-        }
-      }
-
-      function onConn() {
-        conn = true;
-        badge("connected", "CONNECTED");
-        const b = document.getElementById("btn");
-        b.disabled = false;
-        b.textContent = "Putuskan Koneksi";
-        b.classList.add("disc");
-        cl.subscribe(TOPIC);
-        addLog("SYS", "Connected: " + BROKER);
-        addLog("SYS", "Topic: " + TOPIC);
-        st = Date.now();
-        ui = setInterval(uptime, 1000);
-      }
-
-      function onFail(e) {
-        badge("error", "GAGAL");
-        addLog("SYS", "Error: " + e.errorMessage);
-        btnDis(false);
-      }
-
-      function onLost() {
-        conn = false;
-        badge("", "DISCONNECTED");
-        btnDis(false);
-        if (ui) clearInterval(ui);
-        setSystemOff();
-        const b = document.getElementById("btn");
-        b.textContent = "Hubungkan ke MQTT";
-        b.classList.remove("disc");
-        if (!manualDisconnect) setTimeout(doConn, 3000);
-        manualDisconnect = false;
-      }
-
-      /* =====================================================================
-               DATA HANDLER
-            ===================================================================== */
-      function onMsg(m) {
-        const pl = m.payloadString.trim();
-        mc++;
-        document.getElementById("mc").textContent = mc;
-        const now = new Date();
-        document.getElementById("lu").textContent = now.toLocaleTimeString("id-ID", { hour12: false });
-        try {
-          const d = JSON.parse(pl);
-          const mode = (d.mode || "auto").toLowerCase(); // "auto" | "manual"
-          const suhu = d.suhu !== undefined ? parseFloat(d.suhu) : null;
-          const hum = d.kelembapan !== undefined ? parseFloat(d.kelembapan) : null;
-          const cahaya = (d.cahaya || "").toUpperCase();
-
-          // ---- update mode badge ----
-          updModeBadge(mode, suhu);
-
-          if (mode === "manual") {
-            const ledState = parseLedField(d.led);
-
-            addLog("MODE", "MANUAL");
-            addLog("LED", "L1:" + ledState[0] + " L2:" + ledState[1] + " L3:" + ledState[2] + " L4:" + ledState[3]);
-
-            updLEDsManual(ledState);
-            setSystemManual();
-
-            if (suhu !== null && hum !== null) {
-              updSensor(suhu, hum);
-            }
-            if (cahaya) {
-              updLDR(cahaya);
-            }
-
-            if (Date.now() - lastTableTime >= tableInterval) {
-              addTableRow(now, suhu, hum, cahaya, d.led, "manual");
-              lastTableTime = Date.now();
-            }
-          } else {
-            // AUTO mode
-            if (suhu === null || hum === null) {
-              addLog("ERR", "Data tidak lengkap");
-              return;
-            }
-            addLog("SUHU", suhu.toFixed(1) + " °C");
-            addLog("HUM", hum.toFixed(1) + " %");
-            addLog("LDR", cahaya || "—");
-            setSystemOn(suhu);
-            updSensor(suhu, hum);
-            if (cahaya) updLDR(cahaya);
-            updLEDsAuto(suhu);
-            cekAlert(suhu);
-            if (Date.now() - lastTableTime >= tableInterval) {
-              addTableRow(now, suhu, hum, cahaya, d.led, "auto");
-              lastTableTime = Date.now();
-            }
-          }
-        } catch (e) {
-          addLog("ERR", "JSON Error: " + e.message);
-        }
-      }
-
-      /* Parse led field — accepts:
-               - array  : [1,2,4]  → LED numbers that are ON
-               - string : "1010"   → bitmask, index 0=LED1
-               - number : 0b1010   → bitmask integer
-               Returns bool[4] for LED1..LED4
-            */
-      function parseLedField(led) {
-        const state = [false, false, false, false];
-        if (led === undefined || led === null) return state;
-        if (Array.isArray(led)) {
-          led.forEach((n) => {
-            if (n >= 1 && n <= 4) state[n - 1] = true;
-          });
-        } else if (typeof led === "string" && /^[01]{4}$/.test(led)) {
-          for (let i = 0; i < 4; i++) state[i] = led[i] === "1";
-        } else if (typeof led === "number") {
-          for (let i = 0; i < 4; i++) state[i] = !!(led & (1 << i));
-        }
-        return state;
-      }
-
-      /* =====================================================================
-               ALERT
-            ===================================================================== */
-      function cekAlert(suhu) {
-        let status = "";
-        if (suhu >= 20 && suhu <= 25) {
-          status = "NORMAL";
-          if (status !== lastStatus) showAlert("🟢 Suhu Normal (20–25°C)", "green");
-        } else if (suhu <= 30) {
-          status = "SEDANG";
-          if (status !== lastStatus) showAlert("🟡 Suhu Sedang (26–30°C)", "yellow");
-        } else {
-          status = "PANAS";
-          if (status !== lastStatus) showAlert("🔴 Suhu Panas (>30°C)", "red");
-        }
-        lastStatus = status;
-      }
-
-      /* =====================================================================
-               UI UPDATES
-            ===================================================================== */
-      function updModeBadge(mode, suhu) {
-        const badge = document.getElementById("mode-badge");
-        const dot = document.getElementById("mode-dot");
-        const txt = document.getElementById("mode-text");
-        const hint = document.getElementById("mode-hint");
-        if (mode === "manual") {
-          badge.className = "";
-          badge.id = "mode-badge";
-          badge.classList.add("manual");
-          txt.textContent = "MODE: MANUAL";
-          hint.textContent = "LED dikontrol via tombol fisik";
-        } else {
-          badge.className = "";
-          badge.id = "mode-badge";
-          badge.classList.add("auto");
-          txt.textContent = "MODE: AUTO";
-          hint.textContent = suhu !== null ? "LED dari suhu " + suhu.toFixed(1) + "°C" : "LED dari suhu sensor";
-        }
-      }
-
-      function setSystemOn(suhu) {
-        document.getElementById("sring").className = "sring on";
-        const sv = document.getElementById("sval");
-        sv.className = "sval on";
-        sv.textContent = "AKTIF";
-        const s = suhu <= 25 ? "NORMAL" : suhu <= 30 ? "SEDANG" : "PANAS";
-        document.getElementById("snote").textContent = "Status: " + s + " | " + suhu.toFixed(1) + "°C";
-      }
-      function setSystemManual() {
-        document.getElementById("sring").className = "sring on";
-        const sv = document.getElementById("sval");
-        sv.className = "sval on";
-        sv.textContent = "MANUAL";
-        document.getElementById("snote").textContent = "Kontrol LED via tombol fisik";
-      }
-      function setSystemOff() {
-        document.getElementById("sring").className = "sring";
-        const sv = document.getElementById("sval");
-        sv.className = "sval";
-        sv.textContent = "STANDBY";
-        document.getElementById("snote").textContent = "Menunggu data dari ESP32...";
-        // reset mode badge
-        const mb = document.getElementById("mode-badge");
-        mb.className = "";
-        mb.id = "mode-badge";
-        document.getElementById("mode-text").textContent = "MODE: —";
-        document.getElementById("mode-hint").textContent = "Menunggu data...";
-        document.getElementById("mode-dot").style.background = "#b8a8d0";
-      }
-
-      function updSensor(suhu, hum) {
-        document.getElementById("sv").textContent = suhu.toFixed(1);
-        document.getElementById("hv").textContent = hum.toFixed(1);
-        document.getElementById("sb").style.width = Math.min(100, (suhu / 50) * 100) + "%";
-        document.getElementById("hb").style.width = Math.min(100, hum) + "%";
-      }
-
-      function updLDR(v) {
-        const bx = document.getElementById("lbox"),
-          ic = document.getElementById("lico"),
-          pl = document.getElementById("lpill");
-        if (v === "TERANG") {
-          bx.className = "ldrbox terang";
-          ic.textContent = "☀️";
-          pl.className = "ldrpill terang";
-          pl.textContent = "Terang";
-        } else {
-          bx.className = "ldrbox gelap";
-          ic.textContent = "🌙";
-          pl.className = "ldrpill gelap";
-          pl.textContent = "Gelap";
-        }
-      }
-
-      /* AUTO mode: LED ditentukan dari suhu */
-      function updLEDsAuto(suhu) {
-        resetAllLED();
-        // set hint label
-        document.getElementById("lb1").textContent = "20 – 25°C";
-        document.getElementById("lb2").textContent = "26 – 30°C";
-        document.getElementById("lb3").textContent = "≥ 30°C";
-        document.getElementById("lb4").textContent = "Indikator";
-
-        if (suhu >= 20 && suhu <= 25) setLEDColor("l1", "ls1", "green", "Menyala");
-        else if (suhu >= 26 && suhu <= 30) setLEDColor("l2", "ls2", "yellow", "Menyala");
-        else if (suhu >= 30) setLEDColor("l3", "ls3", "red", "Menyala");
-        // LED4 = indikator aktif selalu nyala di auto
-        document.getElementById("l4").className = "lorb green";
-        document.getElementById("ls4").textContent = "Aktif";
-      }
-
-      /* MANUAL mode: LED state diterima langsung dari ESP32 */
-      function updLEDsManual(state) {
-        // state = bool[4]
-        const colors = ["green", "yellow", "red", "green"];
-        // label hint manual
-        ["lb1", "lb2", "lb3", "lb4"].forEach((id, i) => {
-          document.getElementById(id).textContent = "BTN " + (i + 1);
-        });
-        state.forEach((on, i) => {
-          const oid = "l" + (i + 1),
-            sid = "ls" + (i + 1);
-          if (on) {
-            setLEDColor(oid, sid, colors[i], "Menyala");
-          } else {
-            document.getElementById(oid).className = "lorb";
-            document.getElementById(sid).textContent = "Padam";
-          }
-        });
-      }
-
-      function setLEDColor(id, label, color, text) {
-        document.getElementById(id).className = "lorb " + color;
-        document.getElementById(label).textContent = text;
-      }
-      function resetAllLED() {
-        ["l1", "l2", "l3", "l4"].forEach((id) => (document.getElementById(id).className = "lorb"));
-        ["ls1", "ls2", "ls3", "ls4"].forEach((id) => (document.getElementById(id).textContent = "Padam"));
-      }
-
-      /* =====================================================================
-               UTIL
-            ===================================================================== */
-      function badge(cls, txt) {
-        document.getElementById("badge").className = cls;
-        document.getElementById("btext").textContent = txt;
-      }
-      function btnDis(d) {
-        document.getElementById("btn").disabled = d;
-      }
-
-      function addLog(tp, msg) {
-        const el = document.getElementById("log"),
-          t = new Date().toLocaleTimeString("id-ID", { hour12: false });
-        const d = document.createElement("div");
-        d.className = "le";
-        const cls = msg.includes("TERANG") || msg.includes("AKTIF") ? "on-txt" : msg.includes("GELAP") || msg.includes("STANDBY") ? "muted" : "";
-        d.innerHTML = `<span class="lt">${t}</span> <span class="lk">[${tp}]</span> <span class="lm ${cls}">${msg}</span>`;
-        el.appendChild(d);
-        el.scrollTop = el.scrollHeight;
-        while (el.children.length > 120) el.removeChild(el.firstChild);
-      }
-
-      function uptime() {
-        if (!st) return;
-        const s = Math.floor((Date.now() - st) / 1000);
-        document.getElementById("up").textContent = String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
-      }
-
-      function showAlert(text, type) {
-        const div = document.createElement("div");
-        div.className = "alert-box alert-" + type;
-        div.innerText = text;
-        document.body.appendChild(div);
-        setTimeout(() => div.remove(), 3000);
-      }
-
-      /* =====================================================================
-               INIT
-            ===================================================================== */
-      window.addEventListener("load", loadHistory);
-    </script>
-  </body>
+window.addEventListener('load',loadHistory);
+</script>
+</body>
 </html>
