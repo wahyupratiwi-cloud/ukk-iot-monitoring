@@ -1,896 +1,1621 @@
 <!doctype html>
 <html lang="id">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>IoT Monitor — Kelompok 6</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/paho-mqtt.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
-  <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
-    :root{
-      --pink:    #FF7EB3;
-      --pink-lt: #FFF0F7;
-      --pink-md: #FFD6EA;
-      --teal:    #00C9A7;
-      --teal-lt: #E6FAF6;
-      --teal-md: #A0ECD8;
-      --sun:     #FFB830;
-      --sun-lt:  #FFF5DC;
-      --sun-md:  #FFE0A0;
-      --lav:     #9B8FFF;
-      --lav-lt:  #F2F0FF;
-      --lav-md:  #D4CEFF;
-      --bg:      #F9F8FF;
-      --white:   #FFFFFF;
-      --ink:     #1E1B2E;
-      --ink-2:   #4A4660;
-      --ink-3:   #9A96B0;
-      --line:    #ECEAF5;
-      --r:       18px;
-      --r-lg:    24px;
-    }
-
-    /* ===== SPLASH ===== */
-    #splash{
-      position:fixed;inset:0;z-index:9999;
-      background:var(--white);
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
-      padding:40px 32px;
-      transition:opacity 0.5s,visibility 0.5s;
-    }
-    #splash.hide{opacity:0;visibility:hidden}
-
-    .sp-badge{
-      font-family:'Space Mono',monospace;font-size:0.58rem;
-      letter-spacing:3px;text-transform:uppercase;
-      color:var(--ink-3);margin-bottom:28px;
-    }
-    .sp-icon{
-      width:72px;height:72px;border-radius:22px;
-      background:linear-gradient(135deg,var(--teal),var(--lav));
-      display:flex;align-items:center;justify-content:center;
-      margin-bottom:28px;
-      box-shadow:0 8px 28px rgba(155,143,255,0.25);
-    }
-    .sp-title{
-      font-family:'Quicksand',sans-serif;
-      font-size:2rem;font-weight:700;
-      color:var(--ink);text-align:center;line-height:1.3;margin-bottom:8px;
-    }
-    .sp-title b{color:var(--teal)}
-    .sp-sub{
-      font-size:0.83rem;color:var(--ink-3);
-      text-align:center;line-height:1.7;margin-bottom:10px;
-    }
-    .sp-group{
-      font-family:'Space Mono',monospace;font-size:0.65rem;
-      color:var(--lav);letter-spacing:2px;margin-bottom:40px;
-    }
-    .sp-btn{
-      width:100%;max-width:260px;padding:14px;
-      background:var(--ink);color:var(--white);
-      font-family:'Quicksand',sans-serif;font-size:0.95rem;font-weight:700;
-      border:none;border-radius:14px;cursor:pointer;
-      transition:all 0.2s;letter-spacing:0.2px;
-    }
-    .sp-btn:hover{background:var(--lav);transform:translateY(-2px);box-shadow:0 8px 24px rgba(155,143,255,0.3)}
-    .sp-tags{display:flex;gap:7px;margin-top:24px;flex-wrap:wrap;justify-content:center}
-    .sp-tag{
-      font-family:'Space Mono',monospace;font-size:0.52rem;letter-spacing:1px;
-      padding:4px 10px;border-radius:8px;
-      background:var(--bg);color:var(--ink-3);border:1px solid var(--line);
-    }
-
-    /* ===== BODY ===== */
-    body{background:var(--bg);font-family:'Quicksand',sans-serif;color:var(--ink);min-height:100vh}
-
-    /* ===== TOPBAR ===== */
-    .topbar{
-      background:var(--white);border-bottom:1.5px solid var(--line);
-      padding:0 16px;height:56px;
-      display:flex;align-items:center;justify-content:space-between;
-      position:sticky;top:0;z-index:100;
-    }
-    .tb-l{display:flex;align-items:center;gap:10px}
-    .tb-ic{
-      width:32px;height:32px;border-radius:10px;
-      background:linear-gradient(135deg,var(--teal),var(--lav));
-      display:flex;align-items:center;justify-content:center;
-    }
-    .tb-name{font-size:0.88rem;font-weight:700;color:var(--ink);line-height:1.2}
-    .tb-sub{font-family:'Space Mono',monospace;font-size:0.5rem;color:var(--ink-3);margin-top:1px}
-
-    #badge{
-      display:flex;align-items:center;gap:6px;
-      font-family:'Space Mono',monospace;font-size:0.55rem;
-      padding:6px 12px;border-radius:20px;
-      background:var(--bg);border:1.5px solid var(--line);color:var(--ink-3);
-      transition:all 0.3s;white-space:nowrap;
-    }
-    #badge.connected{background:var(--teal-lt);border-color:var(--teal-md);color:var(--teal)}
-    #badge.error{background:var(--pink-lt);border-color:var(--pink-md);color:var(--pink)}
-    #badge.connecting{background:var(--sun-lt);border-color:var(--sun-md);color:var(--sun)}
-    #dot{width:6px;height:6px;border-radius:50%;background:var(--ink-3);flex-shrink:0;transition:all 0.3s}
-    #badge.connected #dot{background:var(--teal);animation:blink 1.8s infinite}
-    #badge.error #dot{background:var(--pink)}
-    #badge.connecting #dot{background:var(--sun);animation:blink 0.6s infinite}
-    @keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
-
-    /* ===== PAGE ===== */
-    .page{max-width:520px;margin:0 auto;padding:16px 14px 60px}
-
-    /* ===== HERO PANEL ===== */
-    /* Big sensor panel — full width, tall, asymmetric info */
-    .hero{
-      background:var(--ink);border-radius:var(--r-lg);
-      padding:24px;margin-bottom:12px;
-      position:relative;overflow:hidden;
-    }
-    .hero::before{
-      content:'';position:absolute;
-      width:200px;height:200px;border-radius:50%;
-      background:rgba(155,143,255,0.12);
-      right:-60px;top:-60px;
-    }
-    .hero::after{
-      content:'';position:absolute;
-      width:120px;height:120px;border-radius:50%;
-      background:rgba(0,201,167,0.10);
-      left:-30px;bottom:-30px;
-    }
-    .hero-top{
-      display:flex;align-items:flex-start;justify-content:space-between;
-      margin-bottom:20px;position:relative;z-index:1;
-    }
-    .hero-title{
-      font-family:'Space Mono',monospace;font-size:0.55rem;
-      letter-spacing:2.5px;text-transform:uppercase;
-      color:rgba(255,255,255,0.4);
-    }
-    .hero-status{
-      display:flex;align-items:center;gap:6px;
-      background:rgba(255,255,255,0.08);
-      border:1px solid rgba(255,255,255,0.12);
-      border-radius:20px;padding:5px 10px;
-    }
-    .hero-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.3);transition:all 0.4s}
-    .hero-dot.on{background:var(--teal);animation:blink 1.8s infinite}
-    .hero-dot.manual{background:var(--sun);animation:blink 1s infinite}
-    .hero-status-txt{font-family:'Space Mono',monospace;font-size:0.5rem;color:rgba(255,255,255,0.6)}
-
-    /* Two big numbers side by side */
-    .hero-nums{display:grid;grid-template-columns:1fr 1fr;gap:0;position:relative;z-index:1;margin-bottom:20px}
-    .hero-num-block{padding:0 4px}
-    .hero-num-block:first-child{border-right:1px solid rgba(255,255,255,0.08);padding-right:16px}
-    .hero-num-block:last-child{padding-left:16px}
-    .hn-label{
-      font-family:'Space Mono',monospace;font-size:0.5rem;
-      letter-spacing:2px;text-transform:uppercase;
-      margin-bottom:6px;
-    }
-    .hn-label-suhu{color:var(--pink)}
-    .hn-label-hum{color:rgba(91,196,255,0.9)}
-    .hn-val{
-      font-family:'Space Mono',monospace;font-size:3rem;font-weight:700;
-      line-height:1;letter-spacing:-2px;color:var(--white);
-    }
-    .hn-unit{font-size:1rem;letter-spacing:0;color:rgba(255,255,255,0.4);margin-left:2px}
-    .hn-bar{height:2px;border-radius:2px;background:rgba(255,255,255,0.08);margin-top:10px;overflow:hidden}
-    .hn-fill-suhu{height:100%;border-radius:2px;background:var(--pink);width:0%;transition:width 0.7s}
-    .hn-fill-hum{height:100%;border-radius:2px;background:#5BC4FF;width:0%;transition:width 0.7s}
-
-    /* LDR + mode row inside hero */
-    .hero-bottom{
-      display:flex;align-items:center;justify-content:space-between;
-      background:rgba(255,255,255,0.05);border-radius:12px;
-      border:1px solid rgba(255,255,255,0.08);
-      padding:10px 14px;position:relative;z-index:1;
-    }
-    .hb-ldr{display:flex;align-items:center;gap:8px}
-    .hb-ldr-ico{font-size:18px}
-    .hb-ldr-txt{font-size:0.75rem;font-weight:600;color:rgba(255,255,255,0.7)}
-    .hb-ldr-txt span{display:block;font-family:'Space Mono',monospace;font-size:0.5rem;color:rgba(255,255,255,0.35);letter-spacing:1px;text-transform:uppercase;margin-bottom:1px}
-    .hb-divider{width:1px;height:28px;background:rgba(255,255,255,0.1)}
-    .hb-mode{text-align:right}
-    .hb-mode-label{font-family:'Space Mono',monospace;font-size:0.48rem;color:rgba(255,255,255,0.35);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:2px}
-    .hb-mode-val{font-family:'Space Mono',monospace;font-size:0.72rem;font-weight:700;color:rgba(255,255,255,0.8);transition:color 0.3s}
-    .hb-mode-val.auto{color:var(--teal)}
-    .hb-mode-val.manual{color:var(--sun)}
-    .hb-lu{text-align:right}
-    .hb-lu-label{font-family:'Space Mono',monospace;font-size:0.45rem;color:rgba(255,255,255,0.3);letter-spacing:1px;text-transform:uppercase;margin-bottom:1px}
-    .hb-lu-val{font-family:'Space Mono',monospace;font-size:0.65rem;color:rgba(255,255,255,0.6)}
-
-    /* ===== STATUS ROW ===== */
-    /* Horizontal pill row */
-    .status-row{display:flex;gap:10px;margin-bottom:12px}
-    .st-pill{
-      flex:1;background:var(--white);border:1.5px solid var(--line);
-      border-radius:14px;padding:14px 12px;
-      display:flex;align-items:center;gap:10px;
-      transition:all 0.35s;
-    }
-    .st-pill.active-teal{background:var(--teal-lt);border-color:var(--teal-md)}
-    .st-pill.active-sun{background:var(--sun-lt);border-color:var(--sun-md)}
-    .st-ico{
-      width:36px;height:36px;border-radius:10px;
-      background:var(--bg);border:1.5px solid var(--line);
-      display:flex;align-items:center;justify-content:center;
-      font-size:16px;flex-shrink:0;transition:all 0.4s;
-    }
-    .st-pill.active-teal .st-ico{background:var(--teal-md);border-color:var(--teal)}
-    .st-pill.active-sun .st-ico{background:var(--sun-md);border-color:var(--sun)}
-    .st-label{font-family:'Space Mono',monospace;font-size:0.48rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-3);margin-bottom:3px}
-    .st-val{font-size:0.8rem;font-weight:700;color:var(--ink-3);transition:color 0.35s}
-    .st-pill.active-teal .st-val{color:var(--teal)}
-    .st-pill.active-sun .st-val{color:var(--sun)}
-    .st-note{font-size:0.58rem;color:var(--ink-3);margin-top:1px}
-
-    /* ===== LED SECTION ===== */
-    .sec-hd{
-      display:flex;align-items:center;gap:10px;
-      font-family:'Space Mono',monospace;font-size:0.5rem;
-      letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-3);
-      margin-bottom:10px;
-    }
-    .sec-hd::after{content:'';flex:1;height:1px;background:var(--line)}
-
-    .led-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
-    @media(max-width:380px){.led-row{grid-template-columns:repeat(2,1fr)}}
-
-    .led-tile{
-      background:var(--white);border:1.5px solid var(--line);
-      border-radius:16px;padding:14px 6px;
-      display:flex;flex-direction:column;align-items:center;gap:7px;
-      transition:all 0.3s;
-    }
-    .led-tile.on-pink{border-color:var(--pink-md);background:var(--pink-lt)}
-    .led-tile.on-sun{border-color:var(--sun-md);background:var(--sun-lt)}
-    .led-tile.on-teal{border-color:var(--teal-md);background:var(--teal-lt)}
-
-    .lorb{
-      width:26px;height:26px;border-radius:50%;
-      background:var(--bg);border:2px solid var(--line);transition:all 0.4s;
-    }
-    .lorb.pink{background:var(--pink);border-color:#E05090;box-shadow:0 0 12px rgba(255,126,179,0.5)}
-    .lorb.sun{background:var(--sun);border-color:#E09010;box-shadow:0 0 12px rgba(255,184,48,0.5)}
-    .lorb.teal{background:var(--teal);border-color:#00A080;box-shadow:0 0 12px rgba(0,201,167,0.5)}
-    .lname{font-size:0.68rem;font-weight:700;color:var(--ink-2)}
-    .lstate{font-size:0.54rem;color:var(--ink-3);transition:color 0.3s}
-    .lstate.on{color:var(--teal)}
-    .lbadge{
-      font-family:'Space Mono',monospace;font-size:0.45rem;
-      padding:2px 6px;border-radius:6px;text-align:center;
-      background:var(--bg);color:var(--ink-3);border:1px solid var(--line);transition:all 0.3s;
-    }
-    .lbadge.active{background:var(--teal-lt);color:var(--teal);border-color:var(--teal-md)}
-
-    /* ===== STATS ===== */
-    .stats-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
-    .stat-box{
-      background:var(--white);border:1.5px solid var(--line);
-      border-radius:14px;padding:14px 10px;
-    }
-    .stb-label{font-family:'Space Mono',monospace;font-size:0.46rem;letter-spacing:2px;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px}
-    .stb-val{font-family:'Space Mono',monospace;font-size:1.3rem;font-weight:700;color:var(--lav);line-height:1}
-    .stb-unit{font-size:0.48rem;color:var(--ink-3);text-transform:uppercase;letter-spacing:1px;margin-top:3px}
-
-    /* ===== LOG ===== */
-    .log-wrap{
-      background:var(--white);border:1.5px solid var(--line);
-      border-radius:var(--r-lg);padding:16px;margin-bottom:12px;
-    }
-    #log{
-      font-family:'Space Mono',monospace;font-size:0.58rem;
-      height:106px;overflow-y:auto;
-      background:var(--bg);border-radius:10px;
-      padding:10px 12px;border:1.5px solid var(--line);
-      display:flex;flex-direction:column;gap:3px;
-    }
-    #log::-webkit-scrollbar{width:3px}
-    #log::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
-    .le{display:flex;gap:8px;opacity:0;animation:fin 0.2s forwards}
-    @keyframes fin{to{opacity:1}}
-    .lt{color:var(--ink-3);flex-shrink:0}
-    .lk{color:var(--lav);flex-shrink:0;font-weight:700}
-    .lm{color:var(--ink-2)}
-    .lm.on-txt{color:var(--teal)}
-    .lm.muted{color:var(--ink-3)}
-
-    /* ===== CONNECT BTN ===== */
-    #btn{
-      display:block;width:100%;margin-top:12px;
-      padding:14px;border:none;border-radius:14px;
-      background:var(--ink);color:var(--white);
-      font-family:'Quicksand',sans-serif;font-size:0.95rem;font-weight:700;
-      cursor:pointer;transition:all 0.2s;letter-spacing:0.2px;
-    }
-    #btn:hover{background:var(--lav);transform:translateY(-1px);box-shadow:0 6px 20px rgba(155,143,255,0.3)}
-    #btn.disc{background:var(--pink-lt);color:var(--pink);border:1.5px solid var(--pink-md);box-shadow:none}
-    #btn.disc:hover{background:var(--pink-md);transform:none}
-    #btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none}
-
-    /* ===== TABLE ===== */
-    .tbl-wrap-outer{
-      background:var(--white);border:1.5px solid var(--line);
-      border-radius:var(--r-lg);padding:16px;
-    }
-    .tbl-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
-    .tbl-actions{display:flex;gap:6px;flex-wrap:wrap}
-    .tbtn{
-      font-size:0.62rem;font-family:'Quicksand',sans-serif;font-weight:700;
-      padding:5px 12px;border-radius:9px;cursor:pointer;border:1.5px solid;transition:all 0.15s;
-    }
-    .tbtn-del{background:var(--pink-lt);border-color:var(--pink-md);color:var(--pink)}
-    .tbtn-del:hover{background:var(--pink-md)}
-    .tbtn-del:disabled{opacity:0.35;cursor:not-allowed}
-    .tbtn-csv{background:var(--teal-lt);border-color:var(--teal-md);color:var(--teal)}
-    .tbtn-csv:hover{background:var(--teal-md)}
-    .tbtn-clr{background:var(--bg);border-color:var(--line);color:var(--ink-3)}
-    .tbtn-clr:hover{background:var(--line)}
-    .sel-info{font-size:0.56rem;color:var(--ink-3);font-family:'Space Mono',monospace}
-
-    .tbl-inner{overflow-x:auto;border-radius:10px;border:1.5px solid var(--line);max-height:260px;overflow-y:auto}
-    .tbl-inner::-webkit-scrollbar{width:3px}
-    .tbl-inner::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
-    table{width:100%;border-collapse:collapse;font-size:0.67rem;font-family:'Space Mono',monospace}
-    thead{position:sticky;top:0;z-index:1}
-    thead tr{background:var(--bg)}
-    thead th{
-      padding:9px 10px;text-align:left;font-size:0.5rem;font-weight:700;
-      text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-3);
-      white-space:nowrap;border-bottom:1.5px solid var(--line);
-    }
-    thead th:first-child{width:34px;text-align:center}
-    tbody tr{border-bottom:1px solid var(--bg);transition:background 0.12s;cursor:pointer}
-    tbody tr:last-child{border-bottom:none}
-    tbody tr:hover{background:var(--lav-lt)}
-    tbody tr.selected{background:var(--teal-lt)!important}
-    td{padding:8px 10px;color:var(--ink-2);vertical-align:middle}
-    td.suhu-cell{color:var(--pink);font-weight:700}
-    td.hum-cell{color:#3AA8D8}
-    .bt{color:#B07000;background:var(--sun-lt);border-radius:6px;font-size:0.55rem;padding:2px 8px;display:inline-block;border:1px solid var(--sun-md)}
-    .bg2b{color:var(--lav);background:var(--lav-lt);border-radius:6px;font-size:0.55rem;padding:2px 8px;display:inline-block;border:1px solid var(--lav-md)}
-    .no-data{text-align:center;padding:22px;color:var(--ink-3);font-size:0.67rem}
-    .cb-col{width:32px;text-align:center}
-    input[type="checkbox"]{accent-color:var(--lav);width:12px;height:12px;cursor:pointer}
-
-    /* ===== ALERT ===== */
-    .alert-box{
-      position:fixed;bottom:20px;right:14px;left:14px;max-width:420px;margin:0 auto;
-      padding:12px 18px;border-radius:12px;font-weight:700;font-size:0.8rem;
-      z-index:9990;animation:slideUp 0.3s ease;font-family:'Quicksand',sans-serif;
-    }
-    .alert-green{background:var(--teal);color:#fff}
-    .alert-yellow{background:var(--sun);color:var(--ink)}
-    .alert-red{background:var(--pink);color:#fff}
-    @keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-
-    /* ===== DESKTOP RESPONSIVE ===== */
-    @media(min-width:860px){
-      .topbar{padding:0 36px;height:64px}
-      .tb-name{font-size:1rem}
-      .tb-ic{width:38px;height:38px;border-radius:12px}
-      #badge{font-size:0.63rem;padding:7px 16px}
-
-      /* 2-column grid layout */
-      .page{
-        max-width:1200px;
-        padding:28px 32px 60px;
-        display:grid;
-        grid-template-columns:1fr 1fr;
-        gap:16px;
-        align-items:start;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IoT Monitor — Kelompok 6</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/paho-mqtt.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
       }
 
-      /* Left column */
-      .hero        {grid-column:1;grid-row:1}
-      .status-row  {grid-column:1;grid-row:2}
-      .led-section-wrap{grid-column:1;grid-row:3}
-      .stats-strip {grid-column:1;grid-row:4}
+      /* ============================================================
+   SPLASH SCREEN
+============================================================ */
+      #splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: linear-gradient(135deg, #3b1f6e 0%, #6b4fa0 45%, #9b7ec8 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+        padding: 24px;
+        transition:
+          opacity 0.6s ease,
+          visibility 0.6s ease;
+      }
+      #splash.hide {
+        opacity: 0;
+        visibility: hidden;
+      }
 
-      /* Right column */
-      .log-wrap        {grid-column:2;grid-row:1/3}
-      .tbl-wrap-outer  {grid-column:2;grid-row:3/5}
+      .splash-glow {
+        width: 110px;
+        height: 110px;
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.12);
+        border: 2px solid rgba(255, 255, 255, 0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 32px;
+        box-shadow: 0 0 60px rgba(200, 180, 240, 0.3);
+      }
 
-      /* Bigger elements */
-      .hn-val{font-size:3.8rem}
-      .hero{padding:28px}
-      #log{height:210px}
-      .tbl-inner{max-height:380px}
-      .led-tile{padding:18px 10px}
-      .lorb{width:30px;height:30px}
-      .stb-val{font-size:1.5rem}
+      .splash-tag {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.7rem;
+        letter-spacing: 3px;
+        color: rgba(255, 255, 255, 0.55);
+        text-transform: uppercase;
+        margin-bottom: 14px;
+      }
 
-      /* Splash bigger */
-      .sp-title{font-size:2.4rem}
-      .sp-btn{max-width:300px;padding:16px;font-size:1rem}
-    }
+      .splash-title {
+        font-family: "Inter", sans-serif;
+        font-size: 1.85rem;
+        font-weight: 800;
+        color: #fff;
+        text-align: center;
+        line-height: 1.25;
+        margin-bottom: 10px;
+        max-width: 440px;
+      }
 
-    @media(min-width:1200px){
-      .page{max-width:1360px;grid-template-columns:1.15fr 0.85fr}
-      .hn-val{font-size:4.4rem}
-      #log{height:250px}
-      .tbl-inner{max-height:420px}
-    }
+      .splash-title span {
+        color: #e0c8ff;
+      }
 
-    /* LED wrapper: acts as passthrough on mobile, block on desktop */
-    .led-section-wrap{display:contents}
-    @media(min-width:860px){
-      .led-section-wrap{display:block}
-      .led-section-wrap .sec-hd{margin-bottom:10px}
-      .led-section-wrap .led-row{margin-bottom:0}
-    }
-  </style>
-</head>
-<body>
+      .splash-sub {
+        font-size: 0.88rem;
+        color: rgba(255, 255, 255, 0.65);
+        margin-bottom: 6px;
+        text-align: center;
+      }
 
-<!-- SPLASH -->
-<div id="splash">
-  <div class="sp-badge">Proyek Akhir · SMK IoT</div>
-  <div class="sp-icon">
-    <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
-      <path d="M17 3L9 18h7l-2 13 11-16h-7l2-12z" fill="white"/>
-    </svg>
-  </div>
-  <div class="sp-title">IoT <b>Monitor</b><br/>Dashboard</div>
-  <div class="sp-sub">Suhu · Kelembaban · Pencahayaan<br/>via ESP32 & HiveMQ</div>
-  <div class="sp-group">✦ KELOMPOK 6 ✦</div>
-  <button class="sp-btn" onclick="enterDashboard()">Buka Dashboard →</button>
-  <div class="sp-tags">
-    <span class="sp-tag">ESP32</span>
-    <span class="sp-tag">MQTT</span>
-    <span class="sp-tag">DHT11</span>
-    <span class="sp-tag">LDR</span>
-  </div>
-</div>
+      .splash-author {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.78rem;
+        color: #d4b8f8;
+        margin-bottom: 48px;
+        letter-spacing: 0.5px;
+      }
 
-<!-- APP -->
-<div id="app" style="display:none">
+      .splash-btn {
+        padding: 14px 48px;
+        background: #fff;
+        color: #6b4fa0;
+        font-family: "Inter", sans-serif;
+        font-size: 0.95rem;
+        font-weight: 700;
+        border: none;
+        border-radius: 40px;
+        cursor: pointer;
+        letter-spacing: 0.3px;
+        transition: all 0.2s;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      }
+      .splash-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28);
+      }
+      .splash-btn:active {
+        transform: scale(0.98);
+      }
 
-  <header class="topbar">
-    <div class="tb-l">
-      <div class="tb-ic">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M8 1L4 9h3l-1 6 6-8h-3l1-6z" fill="white"/>
+      .splash-divider {
+        width: 48px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 2px;
+        margin: 28px 0;
+      }
+
+      .splash-dots {
+        display: flex;
+        gap: 8px;
+        margin-top: 36px;
+      }
+      .splash-dots span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+      }
+      .splash-dots span:nth-child(2) {
+        background: rgba(255, 255, 255, 0.6);
+      }
+      .splash-dots span:nth-child(3) {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      /* ============================================================
+   MAIN APP
+============================================================ */
+      body {
+        background: #f3eeff;
+        color: #2d1f4e;
+        font-family: "Inter", sans-serif;
+        padding: 24px 16px 48px;
+      }
+      .wrap {
+        max-width: 860px;
+        margin: 0 auto;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #fff;
+        border: 1px solid #e0d4f7;
+        border-radius: 18px;
+        padding: 15px 22px;
+        margin-bottom: 18px;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+      }
+      .bdot {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: #6b4fa0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .btitle {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #2d1f4e;
+        line-height: 1.2;
+      }
+      .bsub {
+        font-size: 0.64rem;
+        color: #9b86c0;
+        font-family: "JetBrains Mono", monospace;
+        margin-top: 2px;
+      }
+
+      #badge {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.64rem;
+        font-weight: 500;
+        padding: 7px 16px;
+        border-radius: 30px;
+        background: #f4f0fc;
+        border: 1px solid #e0d4f7;
+        color: #b8a8d0;
+        transition: all 0.3s;
+        letter-spacing: 0.5px;
+      }
+      #badge.connected {
+        background: #eaf7f1;
+        border-color: #a8dfc5;
+        color: #2a7a55;
+      }
+      #badge.error {
+        background: #fff0ef;
+        border-color: #f5b8b3;
+        color: #c0392b;
+      }
+      #badge.connecting {
+        background: #fffbe6;
+        border-color: #f0d090;
+        color: #c07a10;
+      }
+      #dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #b8a8d0;
+        flex-shrink: 0;
+        transition: all 0.3s;
+      }
+      #badge.connected #dot {
+        background: #4caf82;
+        animation: pulse 1.8s infinite;
+      }
+      #badge.error #dot {
+        background: #c0392b;
+      }
+      #badge.connecting #dot {
+        background: #c07a10;
+        animation: pulse 0.7s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.25;
+        }
+      }
+
+      .g21 {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+      .g2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+      .g4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+      .g3s {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+
+      .card {
+        background: #fff;
+        border: 1px solid #e0d4f7;
+        border-radius: 16px;
+        padding: 18px 20px;
+      }
+      .clabel {
+        font-size: 0.58rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1.8px;
+        color: #b8a8d0;
+        margin-bottom: 12px;
+      }
+
+      /* system */
+      .sys-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .sring {
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        border: 2.5px solid #e0d4f7;
+        background: #f3eeff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.4s;
+      }
+      .sring.on {
+        border-color: #4caf82;
+        background: #eaf7f1;
+        box-shadow: 0 0 0 6px rgba(76, 175, 130, 0.1);
+      }
+      .sval {
+        font-size: 1.8rem;
+        font-weight: 700;
+        line-height: 1;
+        color: #e0d4f7;
+        transition: color 0.4s;
+      }
+      .sval.on {
+        color: #4caf82;
+      }
+      .snote {
+        font-size: 0.71rem;
+        color: #9b86c0;
+        margin-top: 5px;
+      }
+
+      /* sensor */
+      .sensor-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 5px;
+      }
+      .snum {
+        font-size: 1.9rem;
+        font-weight: 700;
+        color: #6b4fa0;
+        line-height: 1;
+        font-family: "JetBrains Mono", monospace;
+      }
+      .sunit {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #b8a8d0;
+        padding-bottom: 3px;
+      }
+      .sbar {
+        height: 4px;
+        border-radius: 4px;
+        background: #f3eeff;
+        margin-top: 10px;
+        overflow: hidden;
+      }
+      .sfill {
+        height: 100%;
+        border-radius: 4px;
+        background: #9b7ec8;
+        width: 0%;
+        transition: width 0.6s;
+      }
+      .shint {
+        font-size: 0.61rem;
+        color: #c8b8e8;
+        margin-top: 5px;
+      }
+
+      /* ldr */
+      .ldr-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .ldrbox {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        background: #f3eeff;
+        border: 1px solid #e0d4f7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.4s;
+        font-size: 20px;
+      }
+      .ldrbox.terang {
+        background: #fff8e0;
+        border-color: #f0d090;
+      }
+      .ldrbox.gelap {
+        background: #f0eefa;
+        border-color: #d4c5f0;
+      }
+      .ldrpill {
+        font-size: 0.85rem;
+        font-weight: 700;
+        padding: 6px 16px;
+        border-radius: 30px;
+        background: #f3eeff;
+        color: #b8a8d0;
+        transition: all 0.4s;
+      }
+      .ldrpill.terang {
+        background: #fff8e0;
+        color: #9a6500;
+      }
+      .ldrpill.gelap {
+        background: #eeebfa;
+        color: #6b4fa0;
+      }
+
+      /* led */
+      .led-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 16px 12px;
+      }
+      .lorb {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #f0ecfc;
+        border: 2px solid #e0d4f7;
+        transition: all 0.4s;
+      }
+      .lorb.green {
+        background: #2ecc71;
+        border-color: #27ae60;
+        box-shadow: 0 0 10px rgba(46, 204, 113, 0.55);
+      }
+      .lorb.yellow {
+        background: #f1c40f;
+        border-color: #d4ac0d;
+        box-shadow: 0 0 10px rgba(241, 196, 15, 0.55);
+      }
+      .lorb.red {
+        background: #e74c3c;
+        border-color: #c0392b;
+        box-shadow: 0 0 10px rgba(230, 76, 60, 0.55);
+      }
+      .lname {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #7a6a96;
+        text-align: center;
+      }
+      .lstate {
+        font-size: 0.65rem;
+        color: #b8a8d0;
+        transition: color 0.3s;
+        text-align: center;
+      }
+      .lstate.on {
+        color: #6b4fa0;
+      }
+      .lbadge {
+        font-size: 0.55rem;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 8px;
+        background: #f3eeff;
+        color: #b8a8d0;
+        margin-top: 2px;
+        text-align: center;
+      }
+      .lbadge.active {
+        background: #eeebfa;
+        color: #6b4fa0;
+      }
+
+      /* stats */
+      .stval {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #6b4fa0;
+        font-family: "JetBrains Mono", monospace;
+        line-height: 1;
+      }
+      .stunit {
+        font-size: 0.58rem;
+        color: #b8a8d0;
+        margin-top: 4px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      /* log */
+      #log {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.64rem;
+        height: 110px;
+        overflow-y: auto;
+        background: #f8f5ff;
+        border-radius: 10px;
+        padding: 9px 11px;
+        border: 1px solid #e8dff8;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      #log::-webkit-scrollbar {
+        width: 3px;
+      }
+      #log::-webkit-scrollbar-thumb {
+        background: #e0d4f7;
+        border-radius: 3px;
+      }
+      .le {
+        display: flex;
+        gap: 9px;
+        opacity: 0;
+        animation: fin 0.25s forwards;
+      }
+      @keyframes fin {
+        to {
+          opacity: 1;
+        }
+      }
+      .lt {
+        color: #b8a8d0;
+        flex-shrink: 0;
+      }
+      .lk {
+        color: #6b4fa0;
+        flex-shrink: 0;
+        font-weight: 500;
+      }
+      .lm {
+        color: #7a6a96;
+      }
+      .lm.on-txt {
+        color: #2a7a55;
+      }
+      .lm.muted {
+        color: #b8a8d0;
+      }
+
+      /* table */
+      .tbl-wrap {
+        overflow-x: auto;
+        border-radius: 10px;
+        border: 1px solid #e8dff8;
+        max-height: 320px;
+        overflow-y: auto;
+      }
+      .tbl-wrap::-webkit-scrollbar {
+        width: 3px;
+      }
+      .tbl-wrap::-webkit-scrollbar-thumb {
+        background: #e0d4f7;
+        border-radius: 3px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.72rem;
+        font-family: "JetBrains Mono", monospace;
+      }
+      thead {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+      }
+      thead tr {
+        background: #f3eeff;
+      }
+      thead th {
+        padding: 9px 10px;
+        text-align: left;
+        font-size: 0.59rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: #9b86c0;
+        white-space: nowrap;
+        border-bottom: 1px solid #e8dff8;
+      }
+      thead th:first-child {
+        width: 36px;
+        text-align: center;
+      }
+      tbody tr {
+        border-bottom: 1px solid #f3eeff;
+        transition: background 0.15s;
+        cursor: pointer;
+      }
+      tbody tr:last-child {
+        border-bottom: none;
+      }
+      tbody tr:hover {
+        background: #fbf9ff;
+      }
+      tbody tr.selected {
+        background: #eeebfa !important;
+      }
+      td {
+        padding: 8px 10px;
+        color: #5a4a7a;
+        vertical-align: middle;
+      }
+      td.suhu-cell {
+        color: #6b4fa0;
+        font-weight: 600;
+      }
+      td.hum-cell {
+        color: #9b7ec8;
+      }
+      .bt {
+        color: #9a6500;
+        background: #fff8e0;
+        border-radius: 6px;
+        font-size: 0.6rem;
+        padding: 2px 8px;
+        display: inline-block;
+      }
+      .bg {
+        color: #6b4fa0;
+        background: #eeebfa;
+        border-radius: 6px;
+        font-size: 0.6rem;
+        padding: 2px 8px;
+        display: inline-block;
+      }
+      .no-data {
+        text-align: center;
+        padding: 22px;
+        color: #c8b8e8;
+        font-size: 0.72rem;
+      }
+
+      /* checkbox col */
+      .cb-col {
+        width: 32px;
+        text-align: center;
+      }
+      input[type="checkbox"] {
+        accent-color: #6b4fa0;
+        width: 13px;
+        height: 13px;
+        cursor: pointer;
+      }
+
+      /* table toolbar */
+      .tbl-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .tbl-actions {
+        display: flex;
+        gap: 7px;
+        flex-wrap: wrap;
+      }
+      .tbtn {
+        font-size: 0.65rem;
+        font-family: "Inter", sans-serif;
+        font-weight: 600;
+        padding: 5px 13px;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 1px solid;
+        transition: all 0.15s;
+        white-space: nowrap;
+      }
+      .tbtn-del {
+        background: #fff0ef;
+        border-color: #f5b8b3;
+        color: #c0392b;
+      }
+      .tbtn-del:hover {
+        background: #ffe5e3;
+      }
+      .tbtn-del:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .tbtn-csv {
+        background: #eaf7f1;
+        border-color: #a8dfc5;
+        color: #2a7a55;
+      }
+      .tbtn-csv:hover {
+        background: #d8f2e7;
+      }
+      .tbtn-clr {
+        background: #f3eeff;
+        border-color: #e0d4f7;
+        color: #9b86c0;
+      }
+      .tbtn-clr:hover {
+        background: #ece4fc;
+      }
+      .sel-info {
+        font-size: 0.62rem;
+        color: #9b86c0;
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      /* main btn */
+      #btn {
+        display: block;
+        width: 100%;
+        margin-top: 10px;
+        padding: 13px;
+        background: #6b4fa0;
+        border: none;
+        color: #fff;
+        font-family: "Inter", sans-serif;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border-radius: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+        letter-spacing: 0.3px;
+      }
+      #btn:hover {
+        background: #5c3d90;
+        transform: translateY(-1px);
+        box-shadow: 0 5px 18px rgba(107, 79, 160, 0.25);
+      }
+      #btn:active {
+        transform: scale(0.99);
+      }
+      #btn.disc {
+        background: #fff;
+        color: #c0392b;
+        border: 1px solid #f5b8b3;
+      }
+      #btn.disc:hover {
+        background: #fff0ef;
+        box-shadow: none;
+        transform: none;
+      }
+      #btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      /* mode badge */
+      #mode-badge.auto {
+        background: #e8f4ff;
+        border-color: #90c8f0;
+        color: #1a6fa0;
+      }
+      #mode-badge.auto #mode-dot {
+        background: #3aabf0;
+      }
+      #mode-badge.manual {
+        background: #fff8e0;
+        border-color: #f0d090;
+        color: #9a6500;
+      }
+      #mode-badge.manual #mode-dot {
+        background: #f1c40f;
+        animation: pulse 1s infinite;
+      }
+
+      /* alert toast */
+      .alert-box {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 18px;
+        border-radius: 10px;
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.82rem;
+        z-index: 9990;
+        animation: slideIn 0.3s ease;
+      }
+      .alert-green {
+        background: #2ecc71;
+      }
+      .alert-yellow {
+        background: #f1c40f;
+        color: #333;
+      }
+      .alert-red {
+        background: #e74c3c;
+      }
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 580px) {
+        .g21,
+        .g2,
+        .g4,
+        .g3s {
+          grid-template-columns: 1fr 1fr;
+        }
+        .g4 {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 380px) {
+        .g21,
+        .g2,
+        .g3s {
+          grid-template-columns: 1fr;
+        }
+        .g4 {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ============================================================
+     SPLASH SCREEN
+============================================================ -->
+    <div id="splash">
+      <div class="splash-tag">Proyek Akhir · SMK IoT</div>
+
+      <div class="splash-glow">
+        <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+          <circle cx="28" cy="28" r="20" stroke="rgba(255,255,255,0.35)" stroke-width="2" />
+          <circle cx="28" cy="28" r="10" fill="rgba(255,255,255,0.15)" />
+          <circle cx="28" cy="10" r="3.5" fill="rgba(255,255,255,0.85)" />
+          <circle cx="46.4" cy="19" r="3.5" fill="rgba(255,255,255,0.55)" />
+          <circle cx="46.4" cy="37" r="3.5" fill="rgba(255,255,255,0.55)" />
+          <circle cx="28" cy="46" r="3.5" fill="rgba(255,255,255,0.55)" />
+          <circle cx="9.6" cy="37" r="3.5" fill="rgba(255,255,255,0.55)" />
+          <circle cx="9.6" cy="19" r="3.5" fill="rgba(255,255,255,0.55)" />
+          <path d="M30 16L20 30h8l-2 10 10-14h-8l2-10z" fill="rgba(255,255,255,0.9)" />
         </svg>
       </div>
-      <div>
-        <div class="tb-name">ESP32 IoT Dashboard</div>
-        <div class="tb-sub">smk/iot/sensor/pratiwi · Kelompok 6</div>
-      </div>
+
+      <div class="splash-title">IoT Monitor <span>Suhu, Kelembaban</span><br />dan Pencahayaan</div>
+
+      <div class="splash-divider"></div>
+
+      <div class="splash-sub">Dibuat oleh</div>
+      <div class="splash-author">✦ Kelompok 6 ✦</div>
+
+      <button class="splash-btn" onclick="enterDashboard()">Buka Dashboard →</button>
+
+      <div class="splash-dots"><span></span><span></span><span></span></div>
     </div>
-    <div id="badge"><div id="dot"></div><span id="btext">OFF</span></div>
-  </header>
 
-  <div class="page">
-
-    <!-- HERO: dark panel, big numbers -->
-    <div class="hero">
-      <div class="hero-top">
-        <div class="hero-title">Sensor Realtime</div>
-        <div class="hero-status">
-          <div class="hero-dot" id="hero-dot"></div>
-          <span class="hero-status-txt" id="sval">STANDBY</span>
-        </div>
-      </div>
-
-      <div class="hero-nums">
-        <div class="hero-num-block">
-          <div class="hn-label hn-label-suhu">Suhu</div>
+    <!-- ============================================================
+     MAIN APP
+============================================================ -->
+    <div class="wrap" id="app" style="display: none">
+      <header>
+        <div class="brand">
+          <div class="bdot">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <circle cx="9" cy="9" r="4" fill="#ddd0f8" />
+              <circle cx="9" cy="9" r="7" stroke="#c8b4e8" stroke-width="1.5" fill="none" />
+              <circle cx="9" cy="3.5" r="1.2" fill="#fff" />
+              <circle cx="14.2" cy="11.8" r="1.2" fill="#fff" />
+              <circle cx="3.8" cy="11.8" r="1.2" fill="#fff" />
+            </svg>
+          </div>
           <div>
-            <span class="hn-val" id="sv">--</span>
-            <span class="hn-unit">°C</span>
+            <div class="btitle">ESP32 IoT Dashboard</div>
+            <div class="bsub">smk/iot/sensor/pratiwi · HiveMQ Cloud</div>
           </div>
-          <div class="hn-bar"><div class="hn-fill-suhu" id="sb"></div></div>
         </div>
-        <div class="hero-num-block">
-          <div class="hn-label hn-label-hum">Kelembapan</div>
+        <div id="badge">
+          <div id="dot"></div>
+          <span id="btext">DISCONNECTED</span>
+        </div>
+      </header>
+
+      <!-- ROW 1 -->
+      <div class="g21">
+        <div class="card">
+          <div class="clabel">Status sistem</div>
+          <div class="sys-row">
+            <div class="sring" id="sring">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" fill="#ddd0f8" stroke="#9b7ec8" stroke-width="1.3" stroke-linejoin="round" />
+              </svg>
+            </div>
+            <div>
+              <div class="sval" id="sval">STANDBY</div>
+              <div class="snote" id="snote">Menunggu data dari ESP32...</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="clabel">Cahaya — LDR</div>
+          <div class="ldr-row">
+            <div class="ldrbox" id="lbox"><span id="lico" style="font-size: 20px">💡</span></div>
+            <div class="ldrpill" id="lpill">Menunggu</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 2 -->
+      <div class="g2">
+        <div class="card">
+          <div class="clabel">Suhu — DHT11</div>
+          <div class="sensor-row">
+            <div class="snum" id="sv">--</div>
+            <div class="sunit">°C</div>
+          </div>
+          <div class="sbar"><div class="sfill" id="sb"></div></div>
+          <div class="shint">0 – 50 °C</div>
+        </div>
+        <div class="card">
+          <div class="clabel">Kelembapan — DHT11</div>
+          <div class="sensor-row">
+            <div class="snum" id="hv">--</div>
+            <div class="sunit">%</div>
+          </div>
+          <div class="sbar"><div class="sfill" id="hb" style="background: #c8b4e8"></div></div>
+          <div class="shint">0 – 100%</div>
+        </div>
+      </div>
+
+      <!-- MODE BADGE -->
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px">
+        <div
+          id="mode-badge"
+          style="
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: &quot;JetBrains Mono&quot;, monospace;
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 5px 14px;
+            border-radius: 20px;
+            background: #f3eeff;
+            border: 1px solid #e0d4f7;
+            color: #b8a8d0;
+            transition: all 0.35s;
+            letter-spacing: 0.5px;
+          "
+        >
+          <span id="mode-dot" style="width: 7px; height: 7px; border-radius: 50%; background: #b8a8d0; flex-shrink: 0; transition: all 0.3s"></span>
+          <span id="mode-text">MODE: —</span>
+        </div>
+        <span style="font-size: 0.62rem; color: #b8a8d0; font-family: &quot;JetBrains Mono&quot;, monospace" id="mode-hint">Menunggu data...</span>
+      </div>
+
+      <!-- ROW 3: 4 LED -->
+      <div class="g4">
+        <div class="card led-card">
+          <div class="lorb" id="l1"></div>
           <div>
-            <span class="hn-val" id="hv">--</span>
-            <span class="hn-unit">%</span>
-          </div>
-          <div class="hn-bar"><div class="hn-fill-hum" id="hb"></div></div>
-        </div>
-      </div>
-
-      <div class="hero-bottom">
-        <div class="hb-ldr">
-          <span class="hb-ldr-ico" id="lico">💡</span>
-          <div class="hb-ldr-txt">
-            <span>Cahaya LDR</span>
-            <span id="lpill">Menunggu...</span>
+            <div class="lname">LED 1</div>
+            <div class="lstate" id="ls1">Padam</div>
+            <div class="lbadge" id="lb1">GPIO 2</div>
           </div>
         </div>
-        <div class="hb-divider"></div>
-        <div class="hb-mode">
-          <div class="hb-mode-label">Mode</div>
-          <div class="hb-mode-val" id="mode-text">—</div>
+        <div class="card led-card">
+          <div class="lorb" id="l2"></div>
+          <div>
+            <div class="lname">LED 2</div>
+            <div class="lstate" id="ls2">Padam</div>
+            <div class="lbadge" id="lb2">GPIO 18</div>
+          </div>
         </div>
-        <div class="hb-divider"></div>
-        <div class="hb-lu">
-          <div class="hb-lu-label">Update</div>
-          <div class="hb-lu-val" id="lu">—</div>
+        <div class="card led-card">
+          <div class="lorb" id="l3"></div>
+          <div>
+            <div class="lname">LED 3</div>
+            <div class="lstate" id="ls3">Padam</div>
+            <div class="lbadge" id="lb3">GPIO 19</div>
+          </div>
         </div>
-      </div>
-    </div>
-
-    <!-- STATUS PILLS -->
-    <div class="status-row">
-      <div class="st-pill" id="sys-pill">
-        <div class="st-ico" id="sys-ico">⚡</div>
-        <div>
-          <div class="st-label">Sistem</div>
-          <div class="st-val" id="sys-val">STANDBY</div>
-          <div class="st-note" id="snote">Menunggu ESP32...</div>
-        </div>
-      </div>
-      <div class="st-pill" id="mode-pill">
-        <div class="st-ico" id="mode-ico">📡</div>
-        <div>
-          <div class="st-label">Mode Operasi</div>
-          <div class="st-val" id="mode-val">—</div>
-          <div class="st-note" id="mode-hint">Menunggu data...</div>
+        <div class="card led-card">
+          <div class="lorb" id="l4"></div>
+          <div>
+            <div class="lname">LED 4</div>
+            <div class="lstate" id="ls4">Padam</div>
+            <div class="lbadge" id="lb4">GPIO 21</div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- LED -->
-    <div class="sec-hd">Output LED</div>
-    <div class="led-row">
-      <div class="led-tile" id="tile1">
-        <div class="lorb" id="l1"></div>
-        <div class="lname">LED 1</div>
-        <div class="lstate" id="ls1">Padam</div>
-        <div class="lbadge" id="lb1">GPIO 2</div>
+      <!-- ROW 4: Stats -->
+      <div class="g3s">
+        <div class="card">
+          <div class="clabel">Total pesan</div>
+          <div class="stval" id="mc">0</div>
+          <div class="stunit">messages</div>
+        </div>
+        <div class="card">
+          <div class="clabel">Uptime</div>
+          <div class="stval" id="up">00:00</div>
+          <div class="stunit">mm : ss</div>
+        </div>
+        <div class="card">
+          <div class="clabel">Update terakhir</div>
+          <div class="stval" id="lu" style="font-size: 0.85rem; padding-top: 3px">—</div>
+          <div class="stunit">timestamp</div>
+        </div>
       </div>
-      <div class="led-tile" id="tile2">
-        <div class="lorb" id="l2"></div>
-        <div class="lname">LED 2</div>
-        <div class="lstate" id="ls2">Padam</div>
-        <div class="lbadge" id="lb2">GPIO 18</div>
-      </div>
-      <div class="led-tile" id="tile3">
-        <div class="lorb" id="l3"></div>
-        <div class="lname">LED 3</div>
-        <div class="lstate" id="ls3">Padam</div>
-        <div class="lbadge" id="lb3">GPIO 19</div>
-      </div>
-      <div class="led-tile" id="tile4">
-        <div class="lorb" id="l4"></div>
-        <div class="lname">LED 4</div>
-        <div class="lstate" id="ls4">Padam</div>
-        <div class="lbadge" id="lb4">GPIO 21</div>
-      </div>
-    </div>
 
-    <!-- STATS -->
-    <div class="stats-strip">
-      <div class="stat-box">
-        <div class="stb-label">Pesan</div>
-        <div class="stb-val" id="mc">0</div>
-        <div class="stb-unit">total</div>
+      <!-- LOG -->
+      <div class="card" style="margin-bottom: 14px">
+        <div class="clabel">Log MQTT</div>
+        <div id="log">
+          <div class="le"><span class="lt">--:--:--</span><span class="lm muted">Tekan Connect untuk mulai menerima data.</span></div>
+        </div>
       </div>
-      <div class="stat-box">
-        <div class="stb-label">Uptime</div>
-        <div class="stb-val" id="up" style="font-size:1rem">00:00</div>
-        <div class="stb-unit">mm:ss</div>
-      </div>
-      <div class="stat-box">
-        <div class="stb-label">Broker</div>
-        <div style="font-family:'Space Mono',monospace;font-size:0.55rem;color:var(--ink-3);margin-top:4px;line-height:1.5">HiveMQ<br/>Cloud</div>
-      </div>
-    </div>
 
-    <!-- LOG -->
-    <div class="log-wrap">
-      <div class="sec-hd" style="margin-bottom:10px">Log MQTT</div>
-      <div id="log">
-        <div class="le"><span class="lt">--:--:--</span><span class="lm muted">Tekan Connect untuk mulai.</span></div>
+      <!-- TABLE -->
+      <div class="card" style="margin-bottom: 12px">
+        <div class="tbl-toolbar">
+          <div class="clabel" style="margin-bottom: 0">Riwayat data sensor</div>
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+            <span class="sel-info" id="sel-info"></span>
+            <div class="tbl-actions">
+              <button class="tbtn tbtn-del" id="del-btn" onclick="deleteSelected()" disabled>Hapus Terpilih</button>
+              <button class="tbtn tbtn-csv" onclick="exportCSV()">Export CSV</button>
+              <button class="tbtn tbtn-clr" onclick="clearAll()">Hapus Semua</button>
+            </div>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="cb-col"><input type="checkbox" id="chk-all" onchange="toggleAll(this)" /></th>
+                <th>#</th>
+                <th>Waktu</th>
+                <th>Suhu (°C)</th>
+                <th>Kelembapan (%)</th>
+                <th>Cahaya</th>
+                <th>LED aktif</th>
+              </tr>
+            </thead>
+            <tbody id="tbl-body">
+              <tr>
+                <td colspan="7" class="no-data">Belum ada data diterima.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
+
       <button id="btn" onclick="toggle()">Hubungkan ke MQTT</button>
     </div>
+    <!-- end .wrap -->
 
-    <!-- TABLE -->
-    <div class="tbl-wrap-outer">
-      <div class="tbl-toolbar">
-        <div class="sec-hd" style="margin-bottom:0;flex:none">Riwayat Data</div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span class="sel-info" id="sel-info"></span>
-          <div class="tbl-actions">
-            <button class="tbtn tbtn-del" id="del-btn" onclick="deleteSelected()" disabled>Hapus</button>
-            <button class="tbtn tbtn-csv" onclick="exportCSV()">CSV</button>
-            <button class="tbtn tbtn-clr" onclick="clearAll()">Reset</button>
-          </div>
-        </div>
-      </div>
-      <div class="tbl-inner">
-        <table>
-          <thead>
-            <tr>
-              <th class="cb-col"><input type="checkbox" id="chk-all" onchange="toggleAll(this)"/></th>
-              <th>#</th><th>Waktu</th><th>°C</th><th>%RH</th><th>Cahaya</th><th>LED</th>
-            </tr>
-          </thead>
-          <tbody id="tbl-body">
-            <tr><td colspan="7" class="no-data">Belum ada data.</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <script>
+      /* =====================================================================
+               SPLASH
+            ===================================================================== */
+      function enterDashboard() {
+        document.getElementById("splash").classList.add("hide");
+        document.getElementById("app").style.display = "block";
+        setTimeout(() => (document.getElementById("splash").style.display = "none"), 650);
+      }
 
-  </div>
-</div>
+      /* =====================================================================
+               CONFIG
+            ===================================================================== */
+      const BROKER = "cda01f055ad244f08168d0a5b265ab32.s1.eu.hivemq.cloud";
+      const PORT = 8884;
+      const USERNAME = "orangsukses";
+      const PASSWORD = "Kelompok6";
+      const TOPIC = "smk/iot/sensor/pratiwi";
+      const STORAGE_KEY = "iot_history_pratiwi";
+      const MAX_ROWS = 200;
 
-<script>
-/* SPLASH */
-function enterDashboard(){
-  document.getElementById('splash').classList.add('hide');
-  document.getElementById('app').style.display='block';
-  setTimeout(()=>document.getElementById('splash').style.display='none',550);
-}
+      /* =====================================================================
+               STATE
+            ===================================================================== */
+      let cl = null,
+        conn = false,
+        mc = parseInt(localStorage.getItem("msg_count")) || 0,
+        st = null,
+        ui = null;
+      let lastStatus = "",
+        offTimer = null,
+        manualDisconnect = false;
+      let history = []; // [{id,ts,suhu,hum,cahaya,led}]
+      let nextId = 1;
 
-/* CONFIG */
-const BROKER='cda01f055ad244f08168d0a5b265ab32.s1.eu.hivemq.cloud';
-const PORT=8884,USERNAME='orangsukses',PASSWORD='Kelompok6';
-const TOPIC='smk/iot/sensor/pratiwi';
-const STORAGE_KEY='iot_history_pratiwi',MAX_ROWS=200;
+      let lastData = null; 
 
-/* STATE */
-let cl=null,conn=false,mc=parseInt(localStorage.getItem('msg_count'))||0;
-let st=null,ui=null,lastStatus='',manualDisconnect=false;
-let history=[],nextId=1,lastTableTime=0;
-const tableInterval=3000;
+      let lastTableTime = 0;
+      const tableInterval = 3000;
 
-/* STORAGE */
-function saveHistory(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({rows:history,nextId}));}catch(e){}}
-function loadHistory(){
-  try{
-    const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return;
-    const obj=JSON.parse(raw);
-    history=obj.rows||[];nextId=obj.nextId||history.length+1;
-    rebuildTable();
-    const lu=localStorage.getItem('last_update');
-    if(lu)document.getElementById('lu').textContent=lu;
-    updateSelInfo();document.getElementById('mc').textContent=mc;
-    const last=localStorage.getItem('last_sensor');
-    if(last){const d=JSON.parse(last);if(d.suhu&&d.hum)updSensor(d.suhu,d.hum);if(d.cahaya)updLDR(d.cahaya);}
-  }catch(e){}
-}
+      /* =====================================================================
+               LOCALSTORAGE
+            ===================================================================== */
+      function saveHistory() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ rows: history, nextId }));
+        } catch (e) {}
+      }
+      function loadHistory() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return;
+          const obj = JSON.parse(raw);
+          history = obj.rows || [];
+          nextId = obj.nextId || history.length + 1;
+          rebuildTable();
+          const lu = localStorage.getItem("last_update");
+          if (lu) {
+            document.getElementById("lu").textContent = lu;
+          }
+          updateSelInfo();
+          const last = localStorage.getItem("last_sensor");
+            if (last) {
+              const d = JSON.parse(last);
+              if (d.suhu && d.hum) {
+                updSensor(d.suhu, d.hum);
+              }
+              if (d.cahaya) {
+                updLDR(d.cahaya);
+              }
+            }
+        } catch (e) {}
+      }
 
-/* TABLE */
-function rebuildTable(){
-  const tb=document.getElementById('tbl-body');tb.innerHTML='';
-  if(history.length===0){tb.innerHTML='<tr><td colspan="7" class="no-data">Belum ada data.</td></tr>';document.getElementById('chk-all').checked=false;document.getElementById('del-btn').disabled=true;return;}
-  history.forEach(r=>tb.appendChild(makeRow(r)));
-}
-function makeRow(r){
-  const tr=document.createElement('tr');tr.dataset.id=r.id;
-  const cb=`<td class="cb-col"><input type="checkbox" class="row-cb" data-id="${r.id}" onchange="onRowCheck()"></td>`;
-  const badge=r.cahaya==='TERANG'?`<span class="bt">☀️ Terang</span>`:`<span class="bg2b">🌙 Gelap</span>`;
-  tr.innerHTML=`${cb}<td>${r.id}</td><td>${r.ts}</td><td class="suhu-cell">${r.suhu}</td><td class="hum-cell">${r.hum}</td><td>${badge}</td><td>${r.led}</td>`;
-  tr.onclick=function(e){if(e.target.type==='checkbox')return;const c=tr.querySelector('.row-cb');c.checked=!c.checked;onRowCheck();};
-  return tr;
-}
-function addTableRow(now,suhu,hum,cahaya,ledStr){
-  const names=['LED1','LED2','LED3','LED4'];let aktif=[];
-  if(ledStr)ledStr.split('').forEach((v,i)=>{if(v==='1')aktif.push(names[i]);});
-  const ts=now.toLocaleTimeString('id-ID',{hour12:false});
-  const row={id:nextId++,ts,suhu:suhu?suhu.toFixed(1):'-',hum:hum?hum.toFixed(1):'-',cahaya,led:aktif.length?aktif.join(','):'-'};
-  history.unshift(row);if(history.length>MAX_ROWS)history=history.slice(0,MAX_ROWS);
-  const tb=document.getElementById('tbl-body');
-  const no=tb.querySelector('.no-data');if(no)no.parentElement.remove();
-  tb.insertBefore(makeRow(row),tb.firstChild);
-  while(tb.children.length>MAX_ROWS)tb.removeChild(tb.lastChild);
-  updateSelInfo();saveHistory();
-}
-function onRowCheck(){
-  const cbs=[...document.querySelectorAll('.row-cb')];
-  const checked=cbs.filter(c=>c.checked);
-  document.getElementById('chk-all').checked=checked.length===cbs.length&&cbs.length>0;
-  document.getElementById('del-btn').disabled=checked.length===0;
-  document.querySelectorAll('#tbl-body tr[data-id]').forEach(tr=>{const c=tr.querySelector('.row-cb');tr.classList.toggle('selected',c&&c.checked);});
-  updateSelInfo();
-}
-function toggleAll(m){document.querySelectorAll('.row-cb').forEach(c=>c.checked=m.checked);onRowCheck();}
-function updateSelInfo(){
-  const cbs=[...document.querySelectorAll('.row-cb')];const n=cbs.filter(c=>c.checked).length;
-  document.getElementById('sel-info').textContent=history.length>0?(n>0?`${n} dipilih`:`${history.length} baris`):'';
-}
-function deleteSelected(){
-  const ids=new Set([...document.querySelectorAll('.row-cb:checked')].map(c=>+c.dataset.id));
-  if(ids.size===0)return;
-  history=history.filter(r=>!ids.has(r.id));
-  mc-=ids.size;if(mc<0)mc=0;
-  localStorage.setItem('msg_count',mc);document.getElementById('mc').textContent=mc;
-  saveHistory();rebuildTable();updateSelInfo();
-  document.getElementById('chk-all').checked=false;document.getElementById('del-btn').disabled=true;
-}
-function clearAll(){if(history.length===0)return;if(!confirm('Hapus semua riwayat?'))return;history=[];nextId=1;saveHistory();rebuildTable();updateSelInfo();}
-function exportCSV(){
-  if(history.length===0){alert('Tidak ada data.');return;}
-  const h=['#','Waktu','Suhu(°C)','Hum(%)','Cahaya','LED'];
-  const rows=history.map(r=>[r.id,r.ts,r.suhu,r.hum,r.cahaya,r.led]);
-  const csv='data:text/csv;charset=utf-8,'+ [h,...rows].map(r=>r.join(',')).join('\n');
-  const a=document.createElement('a');a.href=encodeURI(csv);
-  a.download=`iot-k6-${new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')}.csv`;a.click();
-}
+      /* =====================================================================
+               TABLE RENDERING
+            ===================================================================== */
+      function rebuildTable() {
+        const tb = document.getElementById("tbl-body");
+        tb.innerHTML = "";
+        if (history.length === 0) {
+          tb.innerHTML = '<tr><td colspan="7" class="no-data">Belum ada data diterima.</td></tr>';
+          document.getElementById("chk-all").checked = false;
+          document.getElementById("del-btn").disabled = true;
+          return;
+        }
+        history.forEach((r) => tb.appendChild(makeRow(r)));
+      }
 
-/* MQTT */
-function toggle(){conn?doDisc():doConn();}
-function doConn(){
-  manualDisconnect=false;
-  badge('connecting','SYNC');btnDis(true);
-  const id='Web-'+Math.floor(Math.random()*9000+1000);
-  cl=new Paho.Client(BROKER,PORT,'/mqtt',id);
-  cl.onConnectionLost=onLost;cl.onMessageArrived=onMsg;
-  cl.connect({userName:USERNAME,password:PASSWORD,useSSL:true,onSuccess:onConn,onFailure:onFail});
-}
-function doDisc(){
-  if(cl&&conn){manualDisconnect=true;cl.disconnect();
-  const b=document.getElementById('btn');b.textContent='Hubungkan ke MQTT';b.classList.remove('disc');b.disabled=false;badge('','OFF');}
-}
-function onConn(){
-  conn=true;badge('connected','LIVE');
-  const b=document.getElementById('btn');b.disabled=false;b.textContent='Putuskan Koneksi';b.classList.add('disc');
-  cl.subscribe(TOPIC);addLog('SYS','Connected: '+BROKER);addLog('SYS','Topic: '+TOPIC);
-  st=Date.now();ui=setInterval(uptime,1000);
-}
-function onFail(e){badge('error','ERROR');addLog('SYS','Gagal: '+e.errorMessage);btnDis(false);}
-function onLost(){
-  conn=false;badge('','OFF');btnDis(false);if(ui)clearInterval(ui);setSystemOff();
-  const b=document.getElementById('btn');b.textContent='Hubungkan ke MQTT';b.classList.remove('disc');
-  if(!manualDisconnect)setTimeout(doConn,3000);manualDisconnect=false;
-}
+      function makeRow(r) {
+        const tr = document.createElement("tr");
+        tr.dataset.id = r.id;
+        const cb = `<td class="cb-col"><input type="checkbox" class="row-cb" data-id="${r.id}" onchange="onRowCheck()"></td>`;
+        const cahayaBadge = r.cahaya === "TERANG" ? `<span class="bt">Terang</span>` : `<span class="bg">Gelap</span>`;
+        tr.innerHTML = `${cb}
+                <td>${r.id}</td>
+                <td>${r.ts}</td>
+                <td class="suhu-cell">${r.suhu}</td>
+                <td class="hum-cell">${r.hum}</td>
+                <td>${cahayaBadge}</td>
+                <td>${r.led}</td>`;
+        tr.onclick = function (e) {
+          if (e.target.type === "checkbox") return;
+          const cb = tr.querySelector(".row-cb");
+          cb.checked = !cb.checked;
+          onRowCheck();
+        };
+        return tr;
+      }
 
-/* DATA */
-function onMsg(m){
-  const pl=m.payloadString.trim();
-  mc++;localStorage.setItem('msg_count',mc);document.getElementById('mc').textContent=mc;
-  const now=new Date();
-  const timeNow=now.toLocaleTimeString('id-ID',{hour12:false});
-  document.getElementById('lu').textContent=timeNow;localStorage.setItem('last_update',timeNow);
-  try{
-    const d=JSON.parse(pl);
-    const mode=(d.mode||'auto').toLowerCase();
-    const suhu=d.suhu!==undefined?parseFloat(d.suhu):null;
-    const hum=d.kelembapan!==undefined?parseFloat(d.kelembapan):null;
-    const cahaya=(d.cahaya||'').toUpperCase();
-    localStorage.setItem('last_sensor',JSON.stringify({suhu,hum,cahaya}));
-    updModeBadge(mode,suhu);
-    if(mode==='manual'){
-      const ls=parseLedField(d.led);
-      addLog('MODE','MANUAL');addLog('LED','L1:'+ls[0]+' L2:'+ls[1]+' L3:'+ls[2]+' L4:'+ls[3]);
-      updLEDsManual(ls);setSystemManual();
-      if(suhu!==null&&hum!==null)updSensor(suhu,hum);
-      if(cahaya)updLDR(cahaya);
-      if(Date.now()-lastTableTime>=tableInterval){addTableRow(now,suhu,hum,cahaya,d.led);lastTableTime=Date.now();}
-    }else{
-      if(suhu===null||hum===null){addLog('ERR','Data tidak lengkap');return;}
-      addLog('SUHU',suhu.toFixed(1)+' °C');addLog('HUM',hum.toFixed(1)+' %');addLog('LDR',cahaya||'—');
-      setSystemOn(suhu);updSensor(suhu,hum);if(cahaya)updLDR(cahaya);
-      updLEDsAuto(suhu);cekAlert(suhu);
-      if(Date.now()-lastTableTime>=tableInterval){addTableRow(now,suhu,hum,cahaya,d.led);lastTableTime=Date.now();}
-    }
-  }catch(e){addLog('ERR','JSON: '+e.message);}
-}
-function parseLedField(led){
-  const s=[false,false,false,false];
-  if(led===undefined||led===null)return s;
-  if(Array.isArray(led)){led.forEach(n=>{if(n>=1&&n<=4)s[n-1]=true;});}
-  else if(typeof led==='string'&&/^[01]{4}$/.test(led)){for(let i=0;i<4;i++)s[i]=led[i]==='1';}
-  else if(typeof led==='number'){for(let i=0;i<4;i++)s[i]=!!(led&(1<<i));}
-  return s;
-}
-function cekAlert(suhu){
-  let status='';
-  if(suhu>=20&&suhu<=25){status='NORMAL';if(status!==lastStatus)showAlert('🟢 Suhu Normal 20–25°C','green');}
-  else if(suhu<=30){status='SEDANG';if(status!==lastStatus)showAlert('🟡 Suhu Sedang 26–30°C','yellow');}
-  else{status='PANAS';if(status!==lastStatus)showAlert('🔴 Suhu Panas >30°C','red');}
-  lastStatus=status;
-}
+      function addTableRow(now, suhu, hum, cahaya, ledStr, mode) {
+        const names = ["LED1", "LED2", "LED3", "LED4"];
+        let aktif = [];
 
-/* UI */
-function updModeBadge(mode,suhu){
-  const mt=document.getElementById('mode-text'),mv=document.getElementById('mode-val'),mh=document.getElementById('mode-hint');
-  const mb=document.getElementById('mode-badge'),mi=document.getElementById('mode-ico'),mp=document.getElementById('mode-pill');
-  if(mode==='manual'){
-    mt.textContent='MANUAL';mt.className='hb-mode-val manual';
-    mv.textContent='MANUAL';mh.textContent='LED via tombol fisik';
-    mp.className='st-pill active-sun';mi.textContent='🎛️';
-  }else{
-    mt.textContent='AUTO';mt.className='hb-mode-val auto';
-    mv.textContent='AUTO';mh.textContent=suhu!==null?'LED otomatis '+suhu.toFixed(1)+'°C':'LED dari sensor';
-    mp.className='st-pill active-teal';mi.textContent='🤖';
-  }
-}
-function setSystemOn(suhu){
-  document.getElementById('hero-dot').className='hero-dot on';
-  document.getElementById('sval').textContent='AKTIF';
-  document.getElementById('sys-pill').className='st-pill active-teal';
-  document.getElementById('sys-ico').textContent='✅';
-  document.getElementById('sys-val').textContent='AKTIF';
-  const s=suhu<=25?'Normal':suhu<=30?'Sedang':'Panas';
-  document.getElementById('snote').textContent=s+' · '+suhu.toFixed(1)+'°C';
-}
-function setSystemManual(){
-  document.getElementById('hero-dot').className='hero-dot manual';
-  document.getElementById('sval').textContent='MANUAL';
-  document.getElementById('sys-pill').className='st-pill active-sun';
-  document.getElementById('sys-ico').textContent='🎛️';
-  document.getElementById('sys-val').textContent='MANUAL';
-  document.getElementById('snote').textContent='Tombol fisik aktif';
-}
-function setSystemOff(){
-  document.getElementById('hero-dot').className='hero-dot';
-  document.getElementById('sval').textContent='STANDBY';
-  document.getElementById('sys-pill').className='st-pill';
-  document.getElementById('sys-ico').textContent='⚡';
-  document.getElementById('sys-val').textContent='STANDBY';
-  document.getElementById('snote').textContent='Menunggu ESP32...';
-  document.getElementById('mode-text').textContent='—';
-  document.getElementById('mode-text').className='hb-mode-val';
-  document.getElementById('mode-val').textContent='—';
-  document.getElementById('mode-hint').textContent='Menunggu data...';
-  document.getElementById('mode-pill').className='st-pill';
-  document.getElementById('mode-ico').textContent='📡';
-}
-function updSensor(suhu,hum){
-  document.getElementById('sv').textContent=suhu.toFixed(1);
-  document.getElementById('hv').textContent=hum.toFixed(1);
-  document.getElementById('sb').style.width=Math.min(100,(suhu/50)*100)+'%';
-  document.getElementById('hb').style.width=Math.min(100,hum)+'%';
-}
-function updLDR(v){
-  const ic=document.getElementById('lico'),pl=document.getElementById('lpill');
-  if(v==='TERANG'){ic.textContent='☀️';pl.textContent='Terang';}
-  else{ic.textContent='🌙';pl.textContent='Gelap';}
-}
-function updLEDsAuto(suhu){
-  resetAllLED();
-  ['lb1','lb2','lb3','lb4'].forEach((id,i)=>document.getElementById(id).textContent=['20–25°C','26–30°C','≥30°C','Aktif'][i]);
-  if(suhu>=20&&suhu<=25)setLED(0,'pink','on-pink');
-  else if(suhu>=26&&suhu<=30)setLED(1,'sun','on-sun');
-  else if(suhu>=30)setLED(2,'pink','on-pink');
-  setLED(3,'teal','on-teal');
-}
-function updLEDsManual(state){
-  const cs=[['pink','on-pink'],['sun','on-sun'],['pink','on-pink'],['teal','on-teal']];
-  ['lb1','lb2','lb3','lb4'].forEach((id,i)=>document.getElementById(id).textContent='BTN '+(i+1));
-  state.forEach((on,i)=>{if(on)setLED(i,cs[i][0],cs[i][1]);else clearLED(i);});
-}
-function setLED(i,color,tile){
-  document.getElementById('l'+(i+1)).className='lorb '+color;
-  document.getElementById('ls'+(i+1)).textContent='Menyala';
-  document.getElementById('ls'+(i+1)).className='lstate on';
-  document.getElementById('lb'+(i+1)).className='lbadge active';
-  document.getElementById('tile'+(i+1)).className='led-tile '+tile;
-}
-function clearLED(i){
-  document.getElementById('l'+(i+1)).className='lorb';
-  document.getElementById('ls'+(i+1)).textContent='Padam';
-  document.getElementById('ls'+(i+1)).className='lstate';
-  document.getElementById('lb'+(i+1)).className='lbadge';
-  document.getElementById('tile'+(i+1)).className='led-tile';
-}
-function resetAllLED(){for(let i=0;i<4;i++)clearLED(i);}
+        ledStr.split("").forEach((v, i) => {
+          if (v === "1") aktif.push(names[i]);
+        });
 
-/* UTIL */
-function badge(cls,txt){document.getElementById('badge').className=cls;document.getElementById('btext').textContent=txt;}
-function btnDis(d){document.getElementById('btn').disabled=d;}
-function addLog(tp,msg){
-  const el=document.getElementById('log'),t=new Date().toLocaleTimeString('id-ID',{hour12:false});
-  const d=document.createElement('div');d.className='le';
-  const cls=msg.includes('AKTIF')||msg.includes('TERANG')?'on-txt':msg.includes('STANDBY')||msg.includes('GELAP')?'muted':'';
-  d.innerHTML=`<span class="lt">${t}</span><span class="lk">[${tp}]</span><span class="lm ${cls}">${msg}</span>`;
-  el.appendChild(d);el.scrollTop=el.scrollHeight;
-  while(el.children.length>120)el.removeChild(el.firstChild);
-}
-function uptime(){if(!st)return;const s=Math.floor((Date.now()-st)/1000);document.getElementById('up').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
-function showAlert(t,type){const div=document.createElement('div');div.className='alert-box alert-'+type;div.innerText=t;document.body.appendChild(div);setTimeout(()=>div.remove(),3000);}
+        let activeLED = aktif.length ? aktif.join(", ") : "-";
 
-window.addEventListener('load',loadHistory);
-</script>
-</body>
+        const ts = now.toLocaleTimeString("id-ID", { hour12: false });
+
+        const row = {
+          id: nextId++,
+          ts,
+          suhu: suhu ? suhu.toFixed(1) : "-",
+          hum: hum ? hum.toFixed(1) : "-",
+          cahaya,
+          led: activeLED,
+        };
+
+        history.unshift(row);
+        if (history.length > MAX_ROWS) history = history.slice(0, MAX_ROWS);
+
+        const tb = document.getElementById("tbl-body");
+        const noRow = tb.querySelector(".no-data");
+        if (noRow) noRow.parentElement.remove();
+
+        tb.insertBefore(makeRow(row), tb.firstChild);
+        while (tb.children.length > MAX_ROWS) tb.removeChild(tb.lastChild);
+
+        updateSelInfo();
+        saveHistory();
+      }
+      /* =====================================================================
+               CHECKBOX / SELECT
+            ===================================================================== */
+      function onRowCheck() {
+        const cbs = [...document.querySelectorAll(".row-cb")];
+        const checked = cbs.filter((c) => c.checked);
+        document.getElementById("chk-all").checked = checked.length === cbs.length && cbs.length > 0;
+        document.getElementById("del-btn").disabled = checked.length === 0;
+        const rows = document.querySelectorAll("#tbl-body tr[data-id]");
+        rows.forEach((tr) => {
+          const cb = tr.querySelector(".row-cb");
+          tr.classList.toggle("selected", cb && cb.checked);
+        });
+        updateSelInfo();
+      }
+
+      function toggleAll(master) {
+        document.querySelectorAll(".row-cb").forEach((cb) => (cb.checked = master.checked));
+        onRowCheck();
+      }
+
+      function updateSelInfo() {
+        const cbs = [...document.querySelectorAll(".row-cb")];
+        const n = cbs.filter((c) => c.checked).length;
+        const el = document.getElementById("sel-info");
+        el.textContent = history.length > 0 ? (n > 0 ? `${n} baris dipilih` : `${history.length} baris`) : "";
+      }
+
+      /* =====================================================================
+               DELETE SELECTED
+            ===================================================================== */
+      function deleteSelected() {
+        const selectedIds = new Set([...document.querySelectorAll(".row-cb:checked")].map((c) => +c.dataset.id));
+        if (selectedIds.size === 0) return;
+        history = history.filter((r) => !selectedIds.has(r.id));
+        mc -= selectedIds.size;
+        if (mc < 0) mc = 0;
+        localStorage.setItem("msg_count", mc);
+        document.getElementById("mc").textContent = mc;
+        saveHistory();
+        rebuildTable();
+        updateSelInfo();
+        document.getElementById("chk-all").checked = false;
+        document.getElementById("del-btn").disabled = true;
+      }
+
+      /* =====================================================================
+               CLEAR ALL
+            ===================================================================== */
+      function clearAll() {
+        if (history.length === 0) return;
+        if (!confirm("Hapus semua riwayat data?")) return;
+        history = [];
+        nextId = 1;
+        saveHistory();
+        rebuildTable();
+        updateSelInfo();
+      }
+
+      /* =====================================================================
+               EXPORT CSV
+            ===================================================================== */
+      function exportCSV() {
+        if (history.length === 0) {
+          alert("Tidak ada data untuk diekspor.");
+          return;
+        }
+        const header = ["#", "Waktu", "Suhu (°C)", "Kelembapan (%)", "Cahaya", "LED Aktif"];
+        const rows = history.map((r) => [r.id, r.ts, r.suhu, r.hum, r.cahaya, r.led]);
+        const csvContent = "data:text/csv;charset=utf-8," + [header, ...rows].map((r) => r.join(",")).join("\n");
+        const a = document.createElement("a");
+        a.href = encodeURI(csvContent);
+        const now = new Date();
+        const stamp = now.toISOString().slice(0, 16).replace(/[:T]/g, "-");
+        a.download = `iot-data-pratiwi-${stamp}.csv`;
+        a.click();
+      }
+
+      /* =====================================================================
+               MQTT CONNECT
+            ===================================================================== */
+      function toggle() {
+        conn ? doDisc() : doConn();
+      }
+
+      function doConn() {
+        manualDisconnect = false;
+        const id = "Web-" + Math.floor(Math.random() * 9000 + 1000);
+        badge("connecting", "CONNECTING...");
+        btnDis(true);
+        cl = new Paho.Client(BROKER, PORT, "/mqtt", id);
+        cl.onConnectionLost = onLost;
+        cl.onMessageArrived = onMsg;
+        cl.connect({ userName: USERNAME, password: PASSWORD, useSSL: true, onSuccess: onConn, onFailure: onFail });
+      }
+
+      function doDisc() {
+        if (cl && conn) {
+          manualDisconnect = true;
+          cl.disconnect();
+          const b = document.getElementById("btn");
+          b.textContent = "Hubungkan ke MQTT";
+          b.classList.remove("disc");
+          b.disabled = false;
+          badge("", "DISCONNECTED");
+        }
+      }
+
+      function onConn() {
+        conn = true;
+        badge("connected", "CONNECTED");
+        const b = document.getElementById("btn");
+        b.disabled = false;
+        b.textContent = "Putuskan Koneksi";
+        b.classList.add("disc");
+        cl.subscribe(TOPIC);
+        addLog("SYS", "Connected: " + BROKER);
+        addLog("SYS", "Topic: " + TOPIC);
+        st = Date.now();
+        ui = setInterval(uptime, 1000);
+      }
+
+      function onFail(e) {
+        badge("error", "GAGAL");
+        addLog("SYS", "Error: " + e.errorMessage);
+        btnDis(false);
+      }
+
+      function onLost() {
+        conn = false;
+        badge("", "DISCONNECTED");
+        btnDis(false);
+        if (ui) clearInterval(ui);
+        setSystemOff();
+        const b = document.getElementById("btn");
+        b.textContent = "Hubungkan ke MQTT";
+        b.classList.remove("disc");
+        if (!manualDisconnect) setTimeout(doConn, 3000);
+        manualDisconnect = false;
+      }
+
+      /* =====================================================================
+               DATA HANDLER
+            ===================================================================== */
+      function onMsg(m) {
+        const pl = m.payloadString.trim();
+        mc++;
+        localStorage.setItem("msg_count", mc);
+        document.getElementById("mc").textContent = mc;
+        const now = new Date();
+        const timeNow = now.toLocaleTimeString("id-ID", { hour12: false });
+        document.getElementById("lu").textContent = timeNow;
+        localStorage.setItem("last_update", timeNow);
+        try {
+          const d = JSON.parse(pl);
+
+          const mode = (d.mode || "auto").toLowerCase(); // "auto" | "manual"
+          const suhu = d.suhu !== undefined ? parseFloat(d.suhu) : null;
+          const hum = d.kelembapan !== undefined ? parseFloat(d.kelembapan) : null;
+          const cahaya = (d.cahaya || "").toUpperCase();
+          lastData = { suhu, hum, cahaya };
+          localStorage.setItem("last_sensor", JSON.stringify(lastData));
+          // ---- update mode badge ----
+          updModeBadge(mode, suhu);
+
+          if (mode === "manual") {
+            const ledState = parseLedField(d.led);
+
+            addLog("MODE", "MANUAL");
+            addLog("LED", "L1:" + ledState[0] + " L2:" + ledState[1] + " L3:" + ledState[2] + " L4:" + ledState[3]);
+
+            updLEDsManual(ledState);
+            setSystemManual();
+
+            if (suhu !== null && hum !== null) {
+              updSensor(suhu, hum);
+            }
+            if (cahaya) {
+              updLDR(cahaya);
+            }
+
+            // 🔥 delay hanya untuk tabel
+            if (Date.now() - lastTableTime >= tableInterval) {
+              addTableRow(now, suhu, hum, cahaya, d.led, "manual");
+              lastTableTime = Date.now();
+            }
+          } else {
+            // AUTO mode
+            if (suhu === null || hum === null) {
+              addLog("ERR", "Data tidak lengkap");
+              return;
+            }
+            addLog("SUHU", suhu.toFixed(1) + " °C");
+            addLog("HUM", hum.toFixed(1) + " %");
+            addLog("LDR", cahaya || "—");
+            setSystemOn(suhu);
+            updSensor(suhu, hum);
+            if (cahaya) updLDR(cahaya);
+            updLEDsAuto(suhu);
+            cekAlert(suhu);
+            if (Date.now() - lastTableTime >= tableInterval) {
+              addTableRow(now, suhu, hum, cahaya, d.led, "auto");
+              lastTableTime = Date.now();
+            }
+          }
+        } catch (e) {
+          addLog("ERR", "JSON Error: " + e.message);
+        }
+      }
+
+      /* Parse led field — accepts:
+               - array  : [1,2,4]  → LED numbers that are ON
+               - string : "1010"   → bitmask, index 0=LED1
+               - number : 0b1010   → bitmask integer
+               Returns bool[4] for LED1..LED4
+            */
+      function parseLedField(led) {
+        const state = [false, false, false, false];
+        if (led === undefined || led === null) return state;
+        if (Array.isArray(led)) {
+          led.forEach((n) => {
+            if (n >= 1 && n <= 4) state[n - 1] = true;
+          });
+        } else if (typeof led === "string" && /^[01]{4}$/.test(led)) {
+          for (let i = 0; i < 4; i++) state[i] = led[i] === "1";
+        } else if (typeof led === "number") {
+          for (let i = 0; i < 4; i++) state[i] = !!(led & (1 << i));
+        }
+        return state;
+      }
+
+      /* =====================================================================
+               ALERT
+            ===================================================================== */
+      function cekAlert(suhu) {
+        let status = "";
+        if (suhu >= 20 && suhu <= 25) {
+          status = "NORMAL";
+          if (status !== lastStatus) showAlert("🟢 Suhu Normal (20–25°C)", "green");
+        } else if (suhu <= 30) {
+          status = "SEDANG";
+          if (status !== lastStatus) showAlert("🟡 Suhu Sedang (26–30°C)", "yellow");
+        } else {
+          status = "PANAS";
+          if (status !== lastStatus) showAlert("🔴 Suhu Panas (>30°C)", "red");
+        }
+        lastStatus = status;
+      }
+
+      /* =====================================================================
+               UI UPDATES
+            ===================================================================== */
+      function updModeBadge(mode, suhu) {
+        const badge = document.getElementById("mode-badge");
+        const dot = document.getElementById("mode-dot");
+        const txt = document.getElementById("mode-text");
+        const hint = document.getElementById("mode-hint");
+        if (mode === "manual") {
+          badge.className = "";
+          badge.id = "mode-badge";
+          badge.classList.add("manual");
+          txt.textContent = "MODE: MANUAL";
+          hint.textContent = "LED dikontrol via tombol fisik";
+        } else {
+          badge.className = "";
+          badge.id = "mode-badge";
+          badge.classList.add("auto");
+          txt.textContent = "MODE: AUTO";
+          hint.textContent = suhu !== null ? "LED dari suhu " + suhu.toFixed(1) + "°C" : "LED dari suhu sensor";
+        }
+      }
+
+      function setSystemOn(suhu) {
+        document.getElementById("sring").className = "sring on";
+        const sv = document.getElementById("sval");
+        sv.className = "sval on";
+        sv.textContent = "AKTIF";
+        const s = suhu <= 25 ? "NORMAL" : suhu <= 30 ? "SEDANG" : "PANAS";
+        document.getElementById("snote").textContent = "Status: " + s + " | " + suhu.toFixed(1) + "°C";
+      }
+      function setSystemManual() {
+        document.getElementById("sring").className = "sring on";
+        const sv = document.getElementById("sval");
+        sv.className = "sval on";
+        sv.textContent = "MANUAL";
+        document.getElementById("snote").textContent = "Kontrol LED via tombol fisik";
+      }
+      function setSystemOff() {
+        document.getElementById("sring").className = "sring";
+        const sv = document.getElementById("sval");
+        sv.className = "sval";
+        sv.textContent = "STANDBY";
+        document.getElementById("snote").textContent = "Menunggu data dari ESP32...";
+        // reset mode badge
+        const mb = document.getElementById("mode-badge");
+        mb.className = "";
+        mb.id = "mode-badge";
+        document.getElementById("mode-text").textContent = "MODE: —";
+        document.getElementById("mode-hint").textContent = "Menunggu data...";
+        document.getElementById("mode-dot").style.background = "#b8a8d0";
+      }
+
+      function updSensor(suhu, hum) {
+        document.getElementById("sv").textContent = suhu.toFixed(1);
+        document.getElementById("hv").textContent = hum.toFixed(1);
+        document.getElementById("sb").style.width = Math.min(100, (suhu / 50) * 100) + "%";
+        document.getElementById("hb").style.width = Math.min(100, hum) + "%";
+      }
+
+      function updLDR(v) {
+        const bx = document.getElementById("lbox"),
+          ic = document.getElementById("lico"),
+          pl = document.getElementById("lpill");
+        if (v === "TERANG") {
+          bx.className = "ldrbox terang";
+          ic.textContent = "☀️";
+          pl.className = "ldrpill terang";
+          pl.textContent = "Terang";
+        } else {
+          bx.className = "ldrbox gelap";
+          ic.textContent = "🌙";
+          pl.className = "ldrpill gelap";
+          pl.textContent = "Gelap";
+        }
+      }
+
+      /* AUTO mode: LED ditentukan dari suhu */
+      function updLEDsAuto(suhu) {
+        resetAllLED();
+        // set hint label
+        document.getElementById("lb1").textContent = "20 – 25°C";
+        document.getElementById("lb2").textContent = "26 – 30°C";
+        document.getElementById("lb3").textContent = "≥ 30°C";
+        document.getElementById("lb4").textContent = "Indikator";
+
+        if (suhu >= 20 && suhu <= 25) setLEDColor("l1", "ls1", "green", "Menyala");
+        else if (suhu >= 26 && suhu <= 30) setLEDColor("l2", "ls2", "yellow", "Menyala");
+        else if (suhu >= 30) setLEDColor("l3", "ls3", "red", "Menyala");
+        // LED4 = indikator aktif selalu nyala di auto
+        document.getElementById("l4").className = "lorb green";
+        document.getElementById("ls4").textContent = "Aktif";
+      }
+
+      /* MANUAL mode: LED state diterima langsung dari ESP32 */
+      function updLEDsManual(state) {
+        // state = bool[4]
+        const colors = ["green", "yellow", "red", "green"];
+        // label hint manual
+        ["lb1", "lb2", "lb3", "lb4"].forEach((id, i) => {
+          document.getElementById(id).textContent = "BTN " + (i + 1);
+        });
+        state.forEach((on, i) => {
+          const oid = "l" + (i + 1),
+            sid = "ls" + (i + 1);
+          if (on) {
+            setLEDColor(oid, sid, colors[i], "Menyala");
+          } else {
+            document.getElementById(oid).className = "lorb";
+            document.getElementById(sid).textContent = "Padam";
+          }
+        });
+      }
+
+      function setLEDColor(id, label, color, text) {
+        document.getElementById(id).className = "lorb " + color;
+        document.getElementById(label).textContent = text;
+      }
+      function resetAllLED() {
+        ["l1", "l2", "l3", "l4"].forEach((id) => (document.getElementById(id).className = "lorb"));
+        ["ls1", "ls2", "ls3", "ls4"].forEach((id) => (document.getElementById(id).textContent = "Padam"));
+      }
+
+      /* =====================================================================
+               UTIL
+            ===================================================================== */
+      function badge(cls, txt) {
+        document.getElementById("badge").className = cls;
+        document.getElementById("btext").textContent = txt;
+      }
+      function btnDis(d) {
+        document.getElementById("btn").disabled = d;
+      }
+
+      function addLog(tp, msg) {
+        const el = document.getElementById("log"),
+          t = new Date().toLocaleTimeString("id-ID", { hour12: false });
+        const d = document.createElement("div");
+        d.className = "le";
+        const cls = msg.includes("TERANG") || msg.includes("AKTIF") ? "on-txt" : msg.includes("GELAP") || msg.includes("STANDBY") ? "muted" : "";
+        d.innerHTML = `<span class="lt">${t}</span> <span class="lk">[${tp}]</span> <span class="lm ${cls}">${msg}</span>`;
+        el.appendChild(d);
+        el.scrollTop = el.scrollHeight;
+        while (el.children.length > 120) el.removeChild(el.firstChild);
+      }
+
+      function uptime() {
+        if (!st) return;
+        const s = Math.floor((Date.now() - st) / 1000);
+        document.getElementById("up").textContent = String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
+      }
+
+      function showAlert(text, type) {
+        const div = document.createElement("div");
+        div.className = "alert-box alert-" + type;
+        div.innerText = text;
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 3000);
+      }
+
+      /* =====================================================================
+               INIT
+            ===================================================================== */
+      window.addEventListener("load", loadHistory);
+    </script>
+  </body>
 </html>
