@@ -462,7 +462,14 @@
           <div class="hb-ldr-txt"><span>Cahaya LDR</span><span id="lpill">Menunggu...</span></div>
         </div>
         <div class="hb-divider"></div>
-        <div><div class="hb-mode-label">Mode</div><div class="hb-mode-val" id="mode-text">—</div></div>
+        <div>
+          <div class="hb-mode-label">Mode</div>
+          <div class="hb-mode-val" id="mode-text">—</div>
+          <div style="display:flex;gap:5px;margin-top:6px">
+            <button onclick="sendModeCommand('auto')" style="font-family:'DM Mono',monospace;font-size:0.42rem;padding:3px 8px;border-radius:6px;background:var(--sage-lt);border:1px solid var(--sage-md);color:var(--sage);cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='var(--sage-md)'" onmouseout="this.style.background='var(--sage-lt)'">AUTO</button>
+            <button onclick="sendModeCommand('manual')" style="font-family:'DM Mono',monospace;font-size:0.42rem;padding:3px 8px;border-radius:6px;background:var(--peach-lt);border:1px solid var(--peach-md);color:var(--peach);cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='var(--peach-md)'" onmouseout="this.style.background='var(--peach-lt)'">MANUAL</button>
+          </div>
+        </div>
         <div class="hb-divider"></div>
         <div><div class="hb-lu-label">Update</div><div class="hb-lu-val" id="lu">—</div></div>
       </div>
@@ -923,12 +930,22 @@ function deleteSelected(){
 
 /* ===== MQTT ===== */
 function toggle(){conn?doDisc():doConn();}
+// AFTER
 function doConn(){
   manualDisconnect=false;badge('connecting','SYNC');btnDis(true);
   const id='Web-'+Math.floor(Math.random()*9000+1000);
   cl=new Paho.Client(BROKER,PORT,'/mqtt',id);
   cl.onConnectionLost=onLost;cl.onMessageArrived=onMsg;
-  cl.connect({userName:USERNAME,password:PASSWORD,useSSL:true,onSuccess:onConn,onFailure:onFail});
+  cl.connect({
+    userName:USERNAME,
+    password:PASSWORD,
+    useSSL:true,
+    timeout:15,           // tambah: tunggu 15 detik sebelum dinyatakan gagal
+    keepAliveInterval:30, // tambah: kirim ping tiap 30 detik agar koneksi tidak putus
+    cleanSession:true,
+    onSuccess:onConn,
+    onFailure:onFail
+  });
 }
 function doDisc(){
   if(cl&&conn){manualDisconnect=true;cl.disconnect();
@@ -939,9 +956,14 @@ function onConn(){
   const b=document.getElementById('btn');b.disabled=false;b.textContent='Putuskan Koneksi';b.classList.add('disc');
   cl.subscribe(TOPIC);addLog('SYS','Connected: '+BROKER);addLog('SYS','Topic: '+TOPIC);
   st=Date.now();ui=setInterval(uptime,1000);
-}
-function onFail(e){badge('error','ERROR');addLog('SYS','Gagal: '+e.errorMessage);btnDis(false);}
-function onLost(){
+}// AFTER
+function onFail(e){
+  badge('error','ERROR');
+  addLog('SYS','Gagal: '+e.errorMessage+' ('+e.errorCode+')');
+  btnDis(false);
+  // Coba reconnect otomatis setelah 5 detik jika bukan disconnect manual
+  if(!manualDisconnect) setTimeout(doConn, 5000);
+}function onLost(){
   conn=false;badge('','OFF');btnDis(false);if(ui)clearInterval(ui);setSystemOff();
   setTilesInteractive(false); // reset tile ke mode indikator saat disconnect
   const b=document.getElementById('btn');b.textContent='Hubungkan ke MQTT';b.classList.remove('disc');
@@ -1091,6 +1113,18 @@ function addLog(tp,msg){
 }
 function uptime(){if(!st)return;const s=Math.floor((Date.now()-st)/1000);document.getElementById('up').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
 function showAlert(t,type){const div=document.createElement('div');div.className='alert-box alert-'+type;div.innerText=t;document.body.appendChild(div);setTimeout(()=>div.remove(),3500);}
+
+
+/* ===== MODE COMMAND ===== */
+function sendModeCommand(m){
+  if(!conn){showAlert('⚠️ Belum terhubung ke MQTT!','yellow');return;}
+  const payload=JSON.stringify({mode:m});
+  const msg=new Paho.Message(payload);
+  msg.destinationName=TOPIC_KONTROL;
+  cl.send(msg);
+  addLog('CTRL','→ MODE '+m.toUpperCase());
+  showAlert('📡 Perintah mode '+m.toUpperCase()+' dikirim','green');
+}
 
 /* ===== INIT ===== */
 window.addEventListener('load',()=>{loadHistory();loadChartJS(()=>initChart());});
