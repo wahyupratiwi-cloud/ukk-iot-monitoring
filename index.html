@@ -509,7 +509,7 @@
     <div class="sp-grid"></div>
   </div>
   <div class="sp-card">
-    <div class="sp-badge">Proyek Akhir · SIJA </div>
+    <div class="sp-badge">Proyek Akhir · SMK IoT</div>
     <div class="sp-icon-wrap">
       <div class="sp-icon-ring"></div><div class="sp-icon-ring2"></div>
       <div class="sp-icon">
@@ -520,7 +520,7 @@
     </div>
     <div class="sp-title">IoT <b>Monitor</b><br/>Dashboard</div>
     <div class="sp-sub"><span>Suhu</span> · <span>Kelembaban</span> · <span>Pencahayaan</span><br/>via ESP32 &amp; HiveMQ Cloud</div>
-    <div class="sp-group">✦ WAHYU PRATIWI ✦</div>
+    <div class="sp-group">✦ KELOMPOK 6 ✦</div>
     <div class="sp-divider"><div class="sp-divider-dot"></div><div class="sp-divider-dot"></div><div class="sp-divider-dot"></div></div>
     <button class="sp-btn" onclick="enterDashboard()">Buka Dashboard &nbsp;→</button>
     <div class="sp-tags">
@@ -651,10 +651,10 @@
     <div class="led-wrap">
       <div class="sec-hd" style="margin-bottom:10px">Output LED</div>
       <div class="led-row">
-        <div class="led-tile" id="tile1"><div class="lorb" id="l1"></div><div class="lname">LED 1</div><div class="lstate" id="ls1">Padam</div><div class="lbadge" id="lb1">GPIO 2</div></div>
-        <div class="led-tile" id="tile2"><div class="lorb" id="l2"></div><div class="lname">LED 2</div><div class="lstate" id="ls2">Padam</div><div class="lbadge" id="lb2">GPIO 18</div></div>
-        <div class="led-tile" id="tile3"><div class="lorb" id="l3"></div><div class="lname">LED 3</div><div class="lstate" id="ls3">Padam</div><div class="lbadge" id="lb3">GPIO 19</div></div>
-        <div class="led-tile" id="tile4"><div class="lorb" id="l4"></div><div class="lname">LED 4</div><div class="lstate" id="ls4">Padam</div><div class="lbadge" id="lb4">GPIO 21</div></div>
+        <div class="led-tile" id="tile1"><div class="lorb" id="l1"></div><div class="lname">LED 1</div><div class="lstate" id="ls1">Padam</div><div class="lbadge" id="lb1">20–25°C</div></div>
+        <div class="led-tile" id="tile2"><div class="lorb" id="l2"></div><div class="lname">LED 2</div><div class="lstate" id="ls2">Padam</div><div class="lbadge" id="lb2">25–30°C</div></div>
+        <div class="led-tile" id="tile3"><div class="lorb" id="l3"></div><div class="lname">LED 3</div><div class="lstate" id="ls3">Padam</div><div class="lbadge" id="lb3">&gt;30°C</div></div>
+        <div class="led-tile" id="tile4"><div class="lorb" id="l4"></div><div class="lname">LED 4</div><div class="lstate" id="ls4">Padam</div><div class="lbadge" id="lb4">Sistem ON</div></div>
       </div>
     </div>
 
@@ -1032,7 +1032,11 @@ function updLDR(v){
   if(v==='TERANG'){ic.textContent='☀️';pl.textContent='Terang';}else{ic.textContent='🌙';pl.textContent='Gelap';}
 }
 function updLEDsAuto(suhu){
-  resetAllLED();['lb1','lb2','lb3','lb4'].forEach((id,i)=>document.getElementById(id).textContent=['20–25°C','26–30°C','≥30°C','Aktif'][i]);
+  resetAllLED();
+  document.getElementById('lb1').textContent='20–25°C';
+  document.getElementById('lb2').textContent='25–30°C';
+  document.getElementById('lb3').textContent='>30°C';
+  document.getElementById('lb4').textContent='Sistem ON';
   if(suhu>=20&&suhu<=25)setLED(0,'rose','on-rose');
   else if(suhu>=26&&suhu<=30)setLED(1,'peach','on-peach');
   else if(suhu>=30)setLED(2,'rose','on-rose');
