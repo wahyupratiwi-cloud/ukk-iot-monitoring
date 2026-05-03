@@ -178,13 +178,48 @@
     .chart-container{position:relative;height:140px}
     canvas#sensorChart{width:100%!important;height:140px!important}
 
-    /* ===== LED ===== */
+    /* ===== LED — sekarang bisa diklik ===== */
     .led-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
     @media(max-width:380px){.led-row{grid-template-columns:repeat(2,1fr)}}
-    .led-tile{background:var(--card-bg);border:1.5px solid var(--card-border);border-radius:16px;padding:13px 6px;display:flex;flex-direction:column;align-items:center;gap:7px;transition:all 0.3s;}
-    [data-theme="dark"] .led-tile{box-shadow:0 2px 12px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,200,230,0.03)}
 
-    /* LED tile states — green/yellow/red/blue */
+    /* 
+      led-tile sekarang punya 2 peran:
+      1. Saat AUTO  → hanya indikator, tidak bisa diklik (pointer-events:none saat auto)
+      2. Saat MANUAL → tombol interaktif, klik = toggle + kirim MQTT
+    */
+    .led-tile{
+      background:var(--card-bg);border:1.5px solid var(--card-border);border-radius:16px;
+      padding:13px 6px;display:flex;flex-direction:column;align-items:center;gap:7px;
+      transition:all 0.25s;cursor:pointer;position:relative;
+      -webkit-tap-highlight-color:transparent;user-select:none;
+    }
+    [data-theme="dark"] .led-tile{box-shadow:0 2px 12px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,200,230,0.03)}
+    .led-tile:hover{border-color:var(--card-border-hover);transform:translateY(-2px);box-shadow:0 6px 20px rgba(176,127,212,0.12)}
+    .led-tile:active{transform:translateY(0) scale(0.97)}
+
+    /* Mode auto: disable klik visual */
+    .led-tile.auto-mode{cursor:default}
+    .led-tile.auto-mode:hover{transform:none;border-color:var(--card-border);box-shadow:none}
+    .led-tile.auto-mode:active{transform:none}
+
+    /* Badge mode di pojok tile */
+    .led-mode-badge{
+      position:absolute;top:6px;right:6px;
+      font-family:'DM Mono',monospace;font-size:0.38rem;letter-spacing:0.5px;
+      padding:2px 5px;border-radius:5px;
+      background:var(--mauv-lt);color:var(--mauv);border:1px solid var(--mauv-md);
+      opacity:0;transition:opacity 0.2s;
+    }
+    .led-tile:not(.auto-mode):hover .led-mode-badge{opacity:1}
+
+    /* Ripple saat klik */
+    .led-tile::after{
+      content:'';position:absolute;inset:0;border-radius:14px;
+      background:rgba(176,127,212,0.15);opacity:0;transition:opacity 0.15s;
+    }
+    .led-tile.clicking::after{opacity:1}
+
+    /* Tile ON states */
     .led-tile.on-green{border-color:#A5D6A7;background:#F1F8E9}
     [data-theme="dark"] .led-tile.on-green{border-color:#2E7D32;background:#0A1F0A;box-shadow:0 0 0 1px #2E7D32,0 0 20px rgba(76,175,80,0.2)}
     .led-tile.on-yellow{border-color:#FFE082;background:#FFFDE7}
@@ -196,8 +231,6 @@
 
     .lorb{width:26px;height:26px;border-radius:50%;background:var(--bg);border:2px solid var(--card-border);transition:all 0.4s}
     [data-theme="dark"] .lorb{background:#2A1038;border-color:#4A2560}
-
-    /* LED orb colors — green/yellow/red/blue */
     .lorb.led-green{background:#4CAF50;border-color:#388E3C;box-shadow:0 0 14px rgba(76,175,80,0.7)}
     .lorb.led-yellow{background:#FFC107;border-color:#F9A825;box-shadow:0 0 14px rgba(255,193,7,0.7)}
     .lorb.led-red{background:#F44336;border-color:#C62828;box-shadow:0 0 14px rgba(244,67,54,0.7)}
@@ -209,6 +242,24 @@
     [data-theme="dark"] .lbadge{background:#1E0A2A;border-color:#3A1F4A}
     .lbadge.active{background:var(--sage-lt);color:var(--sage);border-color:var(--sage-md)}
     [data-theme="dark"] .lbadge.active{border-color:#186644}
+
+    /* Info bar di bawah LED row */
+    .led-info-bar{
+      display:flex;align-items:center;justify-content:space-between;
+      margin-top:8px;padding:8px 12px;border-radius:10px;
+      background:var(--bg);border:1px solid var(--card-border);
+    }
+    .led-info-txt{font-family:'DM Mono',monospace;font-size:0.46rem;color:var(--ink-3)}
+    .led-info-txt b{color:var(--mauv)}
+    .led-all-btns{display:flex;gap:6px}
+    .led-sm-btn{
+      font-family:'DM Mono',monospace;font-size:0.44rem;padding:4px 8px;border-radius:7px;
+      cursor:pointer;border:1px solid;transition:all 0.15s;
+    }
+    .led-sm-btn-on{background:var(--sage-lt);border-color:var(--sage-md);color:var(--sage)}
+    .led-sm-btn-on:hover{background:var(--sage-md)}
+    .led-sm-btn-off{background:var(--rose-lt);border-color:var(--rose-md);color:var(--rose)}
+    .led-sm-btn-off:hover{background:var(--rose-md)}
 
     /* ===== STATS ===== */
     .stats-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -323,7 +374,7 @@
     </div>
     <div class="sp-title">IoT <b>Monitor</b><br/>Dashboard</div>
     <div class="sp-sub"><span>Suhu</span> · <span>Kelembaban</span> · <span>Pencahayaan</span><br/>via ESP32 &amp; HiveMQ Cloud</div>
-    <div class="sp-group">✦ KELOMPOK 6 ✦</div>
+    <div class="sp-group">✦ Wahyu Pratiwi ✦</div>
     <div class="sp-divider"><div class="sp-divider-dot"></div><div class="sp-divider-dot"></div><div class="sp-divider-dot"></div></div>
     <button class="sp-btn" onclick="enterDashboard()">Buka Dashboard &nbsp;→</button>
     <div class="sp-tags">
@@ -449,14 +500,51 @@
       <div class="chart-container"><canvas id="sensorChart"></canvas></div>
     </div>
 
-    <!-- LED -->
+    <!-- LED — sekarang berfungsi ganda: indikator + tombol kontrol saat MANUAL -->
     <div class="led-wrap">
-      <div class="sec-hd" style="margin-bottom:10px">Output LED</div>
+      <div class="sec-hd" style="margin-bottom:10px">Output LED
+        <!-- tag kecil menunjukkan apakah bisa diklik atau tidak -->
+        <span id="led-ctrl-tag" style="font-family:'DM Mono',monospace;font-size:0.42rem;padding:2px 8px;border-radius:6px;background:var(--bg);border:1px solid var(--card-border);color:var(--ink-3);margin-left:4px">Indikator</span>
+      </div>
       <div class="led-row">
-        <div class="led-tile" id="tile1"><div class="lorb" id="l1"></div><div class="lname">LED 1</div><div class="lstate" id="ls1">Padam</div><div class="lbadge" id="lb1">20–25°C</div></div>
-        <div class="led-tile" id="tile2"><div class="lorb" id="l2"></div><div class="lname">LED 2</div><div class="lstate" id="ls2">Padam</div><div class="lbadge" id="lb2">25–30°C</div></div>
-        <div class="led-tile" id="tile3"><div class="lorb" id="l3"></div><div class="lname">LED 3</div><div class="lstate" id="ls3">Padam</div><div class="lbadge" id="lb3">&gt;30°C</div></div>
-        <div class="led-tile" id="tile4"><div class="lorb" id="l4"></div><div class="lname">LED 4</div><div class="lstate" id="ls4">Padam</div><div class="lbadge" id="lb4">Sistem ON</div></div>
+        <!-- Tiap tile punya onclick, tapi JS akan cek mode sebelum kirim -->
+        <div class="led-tile auto-mode" id="tile1" onclick="onLedTileClick(0)">
+          <div class="led-mode-badge">TAP</div>
+          <div class="lorb" id="l1"></div>
+          <div class="lname">LED 1</div>
+          <div class="lstate" id="ls1">Padam</div>
+          <div class="lbadge" id="lb1">20–25°C</div>
+        </div>
+        <div class="led-tile auto-mode" id="tile2" onclick="onLedTileClick(1)">
+          <div class="led-mode-badge">TAP</div>
+          <div class="lorb" id="l2"></div>
+          <div class="lname">LED 2</div>
+          <div class="lstate" id="ls2">Padam</div>
+          <div class="lbadge" id="lb2">25–30°C</div>
+        </div>
+        <div class="led-tile auto-mode" id="tile3" onclick="onLedTileClick(2)">
+          <div class="led-mode-badge">TAP</div>
+          <div class="lorb" id="l3"></div>
+          <div class="lname">LED 3</div>
+          <div class="lstate" id="ls3">Padam</div>
+          <div class="lbadge" id="lb3">&gt;30°C</div>
+        </div>
+        <div class="led-tile auto-mode" id="tile4" onclick="onLedTileClick(3)">
+          <div class="led-mode-badge">TAP</div>
+          <div class="lorb" id="l4"></div>
+          <div class="lname">LED 4</div>
+          <div class="lstate" id="ls4">Padam</div>
+          <div class="lbadge" id="lb4">Sistem ON</div>
+        </div>
+      </div>
+
+      <!-- Info bar: tampil saat MANUAL, sembunyikan saat AUTO -->
+      <div class="led-info-bar" id="led-info-bar" style="display:none">
+        <span class="led-info-txt">Mode <b>MANUAL</b> — tap tile untuk toggle relay</span>
+        <div class="led-all-btns">
+          <button class="led-sm-btn led-sm-btn-on" onclick="ledAllOn()">Semua ON</button>
+          <button class="led-sm-btn led-sm-btn-off" onclick="ledAllOff()">Semua OFF</button>
+        </div>
       </div>
     </div>
 
@@ -539,6 +627,7 @@ function toggleDark(){applyTheme(document.documentElement.getAttribute('data-the
 const BROKER='cda01f055ad244f08168d0a5b265ab32.s1.eu.hivemq.cloud';
 const PORT=8884,USERNAME='orangsukses',PASSWORD='Kelompok6';
 const TOPIC='smk/iot/sensor/pratiwi';
+const TOPIC_KONTROL='smk/iot/kontrol/pratiwi'; // topic untuk kirim perintah ke ESP32
 const STORAGE_KEY='iot_history_pratiwi',MAX_ROWS=200;
 
 /* ===== STATE ===== */
@@ -546,6 +635,95 @@ let cl=null,conn=false,mc=parseInt(localStorage.getItem('msg_count'))||0;
 let st=null,ui=null,lastStatus='',manualDisconnect=false;
 let history=[],nextId=1,lastTableTime=0;
 const tableInterval=3000;
+
+// State LED yang dikontrol web (hanya aktif saat mode MANUAL)
+let webLedState=[false,false,false,false];
+let currentMode=''; // 'auto' | 'manual' | ''
+
+/* ===== LED TILE CLICK — inti fitur kontrol ===== */
+function onLedTileClick(i){
+  // Hanya bisa diklik saat mode MANUAL dan sudah connect
+  if(currentMode!=='manual'){
+    showAlert('⚠️ ESP32 harus dalam mode MANUAL untuk kontrol web','yellow');
+    return;
+  }
+  if(!conn){
+    showAlert('⚠️ Belum terhubung ke MQTT!','yellow');
+    return;
+  }
+
+  // Animasi ripple
+  const tile=document.getElementById('tile'+(i+1));
+  tile.classList.add('clicking');
+  setTimeout(()=>tile.classList.remove('clicking'),150);
+
+  // Toggle state
+  webLedState[i]=!webLedState[i];
+
+  // Kirim langsung ke ESP32
+  sendLedCommand();
+
+  // Update UI segera (optimistic update) — akan dikoreksi oleh feedback ESP32
+  const cs=[['led-green','on-green'],['led-yellow','on-yellow'],['led-red','on-red'],['led-blue','on-blue']];
+  if(webLedState[i]) setLED(i,cs[i][0],cs[i][1]);
+  else clearLED(i);
+}
+
+function ledAllOn(){
+  if(currentMode!=='manual'){showAlert('⚠️ Mode MANUAL diperlukan','yellow');return;}
+  if(!conn){showAlert('⚠️ Belum terhubung ke MQTT!','yellow');return;}
+  webLedState=[true,true,true,true];
+  sendLedCommand();
+  // Optimistic update
+  const cs=[['led-green','on-green'],['led-yellow','on-yellow'],['led-red','on-red'],['led-blue','on-blue']];
+  for(let i=0;i<4;i++) setLED(i,cs[i][0],cs[i][1]);
+}
+
+function ledAllOff(){
+  if(currentMode!=='manual'){showAlert('⚠️ Mode MANUAL diperlukan','yellow');return;}
+  if(!conn){showAlert('⚠️ Belum terhubung ke MQTT!','yellow');return;}
+  webLedState=[false,false,false,false];
+  sendLedCommand();
+  for(let i=0;i<4;i++) clearLED(i);
+}
+
+function sendLedCommand(){
+  if(!conn||!cl) return;
+  const ledStr=webLedState.map(v=>v?'1':'0').join('');
+  const payload=JSON.stringify({led:ledStr});
+  const msg=new Paho.Message(payload);
+  msg.destinationName=TOPIC_KONTROL;
+  cl.send(msg);
+  addLog('CTRL','→ LED '+ledStr);
+}
+
+/* Ubah tile jadi interaktif atau non-interaktif sesuai mode */
+function setTilesInteractive(isManual){
+  currentMode=isManual?'manual':'auto';
+  const tag=document.getElementById('led-ctrl-tag');
+  const bar=document.getElementById('led-info-bar');
+  for(let i=1;i<=4;i++){
+    const tile=document.getElementById('tile'+i);
+    if(isManual){
+      tile.classList.remove('auto-mode');
+    }else{
+      tile.classList.add('auto-mode');
+    }
+  }
+  if(isManual){
+    tag.textContent='Klik untuk toggle';
+    tag.style.background='var(--peach-lt)';
+    tag.style.borderColor='var(--peach-md)';
+    tag.style.color='var(--peach)';
+    bar.style.display='flex';
+  }else{
+    tag.textContent='Indikator';
+    tag.style.background='var(--bg)';
+    tag.style.borderColor='var(--card-border)';
+    tag.style.color='var(--ink-3)';
+    bar.style.display='none';
+  }
+}
 
 /* ===== MODAL: DELETE ===== */
 let pendingDeleteIds=null;
@@ -598,22 +776,16 @@ function doExportCSV(){
     a.style.cssText='position:absolute;left:-9999px;top:-9999px;opacity:0';
     document.body.appendChild(a);
     if(isMobile){
-      // Mobile: dispatch MouseEvent lebih reliable dari .click()
       const evt=new MouseEvent('click',{bubbles:true,cancelable:true,view:window});
       a.dispatchEvent(evt);
-      setTimeout(()=>{
-        try{document.body.removeChild(a);URL.revokeObjectURL(url);}catch(e){}
-      },5000);
+      setTimeout(()=>{try{document.body.removeChild(a);URL.revokeObjectURL(url);}catch(e){}},5000);
       showAlert('✅ Tersimpan! Cek folder Downloads di HP kamu 📂','green');
     }else{
       a.click();
-      setTimeout(()=>{
-        try{URL.revokeObjectURL(url);document.body.removeChild(a);}catch(e){}
-      },1500);
+      setTimeout(()=>{try{URL.revokeObjectURL(url);document.body.removeChild(a);}catch(e){}},1500);
       showAlert('✅ CSV berhasil diunduh!','green');
     }
   }catch(e){
-    // Fallback 1: buka di tab baru
     try{
       const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
       const url=URL.createObjectURL(blob);
@@ -621,7 +793,6 @@ function doExportCSV(){
       setTimeout(()=>URL.revokeObjectURL(url),8000);
       showAlert('📂 CSV dibuka di tab baru — tekan tahan lalu simpan','yellow');
     }catch(e2){
-      // Fallback 2: data URI
       window.open('data:text/csv;charset=utf-8,'+encodeURIComponent('\uFEFF'+csv),'_blank');
       showAlert('📂 CSV dibuka di tab baru','yellow');
     }
@@ -772,6 +943,7 @@ function onConn(){
 function onFail(e){badge('error','ERROR');addLog('SYS','Gagal: '+e.errorMessage);btnDis(false);}
 function onLost(){
   conn=false;badge('','OFF');btnDis(false);if(ui)clearInterval(ui);setSystemOff();
+  setTilesInteractive(false); // reset tile ke mode indikator saat disconnect
   const b=document.getElementById('btn');b.textContent='Hubungkan ke MQTT';b.classList.remove('disc');
   if(!manualDisconnect)setTimeout(doConn,3000);manualDisconnect=false;
 }
@@ -790,9 +962,16 @@ function onMsg(m){
     const hum=d.kelembapan!==undefined?parseFloat(d.kelembapan):null;
     const cahaya=(d.cahaya||'').toUpperCase();
     localStorage.setItem('last_sensor',JSON.stringify({suhu,hum,cahaya}));
-    updModeBadge(mode,suhu);pushChartPoint(suhu,hum);
+    updModeBadge(mode,suhu);
+    pushChartPoint(suhu,hum);
+
+    // Set interaktivitas tile sesuai mode dari ESP32
+    setTilesInteractive(mode==='manual');
+
     if(mode==='manual'){
       const ls=parseLedField(d.led);
+      // Sync webLedState dengan feedback dari ESP32
+      webLedState=ls.slice();
       addLog('MODE','MANUAL');addLog('LED','L1:'+ls[0]+' L2:'+ls[1]+' L3:'+ls[2]+' L4:'+ls[3]);
       updLEDsManual(ls);setSystemManual();
       if(suhu!==null&&hum!==null)updSensor(suhu,hum);if(cahaya)updLDR(cahaya);
@@ -805,6 +984,7 @@ function onMsg(m){
     }
   }catch(e){addLog('ERR','JSON: '+e.message);}
 }
+
 function parseLedField(led){
   const s=[false,false,false,false];
   if(led===undefined||led===null)return s;
@@ -825,8 +1005,15 @@ function cekAlert(suhu){
 function updModeBadge(mode,suhu){
   const mt=document.getElementById('mode-text'),mv=document.getElementById('mode-val'),mh=document.getElementById('mode-hint');
   const mi=document.getElementById('mode-ico'),mp=document.getElementById('mode-pill');
-  if(mode==='manual'){mt.textContent='MANUAL';mt.className='hb-mode-val manual';mv.textContent='MANUAL';mh.textContent='LED via tombol fisik';mp.className='st-pill active-peach';mi.textContent='🎛️';}
-  else{mt.textContent='AUTO';mt.className='hb-mode-val auto';mv.textContent='AUTO';mh.textContent=suhu!==null?'LED otomatis '+suhu.toFixed(1)+'°C':'LED dari sensor';mp.className='st-pill active-sage';mi.textContent='🤖';}
+  if(mode==='manual'){
+    mt.textContent='MANUAL';mt.className='hb-mode-val manual';
+    mv.textContent='MANUAL';mh.textContent='Tap tile LED untuk toggle relay';
+    mp.className='st-pill active-peach';mi.textContent='🎛️';
+  }else{
+    mt.textContent='AUTO';mt.className='hb-mode-val auto';
+    mv.textContent='AUTO';mh.textContent=suhu!==null?'LED otomatis '+suhu.toFixed(1)+'°C':'LED dari sensor';
+    mp.className='st-pill active-sage';mi.textContent='🤖';
+  }
 }
 function setSystemOn(suhu){
   document.getElementById('hero-dot').className='hero-dot on';document.getElementById('sval').textContent='AKTIF';
@@ -837,7 +1024,7 @@ function setSystemOn(suhu){
 function setSystemManual(){
   document.getElementById('hero-dot').className='hero-dot manual';document.getElementById('sval').textContent='MANUAL';
   document.getElementById('sys-pill').className='st-pill active-peach';document.getElementById('sys-ico').textContent='🎛️';
-  document.getElementById('sys-val').textContent='MANUAL';document.getElementById('snote').textContent='Tombol fisik aktif';
+  document.getElementById('sys-val').textContent='MANUAL';document.getElementById('snote').textContent='Kontrol via web / tombol';
 }
 function setSystemOff(){
   document.getElementById('hero-dot').className='hero-dot';document.getElementById('sval').textContent='STANDBY';
@@ -857,7 +1044,6 @@ function updLDR(v){
   if(v==='TERANG'){ic.textContent='☀️';pl.textContent='Terang';}else{ic.textContent='🌙';pl.textContent='Gelap';}
 }
 
-/* LED 1=hijau(20-25) LED 2=kuning(25-30) LED 3=merah(>30) LED 4=biru(sistem) */
 function updLEDsAuto(suhu){
   resetAllLED();
   document.getElementById('lb1').textContent='20–25°C';
@@ -877,12 +1063,18 @@ function updLEDsManual(state){
 function setLED(i,color,tile){
   document.getElementById('l'+(i+1)).className='lorb '+color;
   document.getElementById('ls'+(i+1)).textContent='Menyala';document.getElementById('ls'+(i+1)).className='lstate on';
-  document.getElementById('lb'+(i+1)).className='lbadge active';document.getElementById('tile'+(i+1)).className='led-tile '+tile;
+  document.getElementById('lb'+(i+1)).className='lbadge active';
+  // Jaga kelas auto-mode agar tidak hilang
+  const t=document.getElementById('tile'+(i+1));
+  const isAuto=t.classList.contains('auto-mode');
+  t.className='led-tile '+(isAuto?'auto-mode ':'')+tile;
 }
 function clearLED(i){
   document.getElementById('l'+(i+1)).className='lorb';document.getElementById('ls'+(i+1)).textContent='Padam';
   document.getElementById('ls'+(i+1)).className='lstate';document.getElementById('lb'+(i+1)).className='lbadge';
-  document.getElementById('tile'+(i+1)).className='led-tile';
+  const t=document.getElementById('tile'+(i+1));
+  const isAuto=t.classList.contains('auto-mode');
+  t.className='led-tile'+(isAuto?' auto-mode':'');
 }
 function resetAllLED(){for(let i=0;i<4;i++)clearLED(i);}
 
