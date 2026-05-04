@@ -35,7 +35,7 @@
       --topbar-bg:rgba(22,10,30,0.95);--topbar-border:#3A1F4A;--chart-grid:rgba(58,31,74,0.9);
     }
 
-    body,header,.hero,.log-wrap,.tbl-wrap-outer,.stat-box,.st-pill,.led-tile,.hero-bottom,.chart-wrap,.topbar,.relay-card{
+    body,header,.hero,.log-wrap,.tbl-wrap-outer,.stat-box,.st-pill,.led-tile,.hero-bottom,.chart-wrap,.topbar,.relay-card,.led-card{
       transition:background 0.35s,border-color 0.35s,color 0.35s,box-shadow 0.35s;
     }
     body{background:var(--bg);font-family:'Nunito',sans-serif;color:var(--ink);min-height:100vh}
@@ -154,7 +154,7 @@
     /* ===== STATUS ===== */
     .status-row{display:flex;gap:10px}
     .st-pill{flex:1;background:var(--card-bg);border:1.5px solid var(--card-border);border-radius:16px;padding:13px 12px;display:flex;align-items:center;gap:10px;transition:all 0.35s;}
-    [data-theme="dark"] .st-pill{box-shadow:0 2px 16px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,200,230,0.03)}
+    [data-theme="dark"] .st-pill{box-shadow:0 2px 16px rgba(0,0,0,0.4),inset 0 1px 0 rgba(168, 57, 118, 0.03)}
     .st-pill.active-sage{background:var(--sage-lt);border-color:var(--sage-md)}[data-theme="dark"] .st-pill.active-sage{border-color:#1A6644;box-shadow:0 0 0 1px #1A6644,0 2px 18px rgba(98,196,164,0.15)}
     .st-pill.active-peach{background:var(--peach-lt);border-color:var(--peach-md)}[data-theme="dark"] .st-pill.active-peach{border-color:#6B4010;box-shadow:0 0 0 1px #6B4010,0 2px 18px rgba(245,151,90,0.15)}
     .st-ico{width:36px;height:36px;border-radius:11px;background:var(--bg);border:1.5px solid var(--card-border);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;transition:all 0.4s;}
@@ -178,31 +178,47 @@
     .chart-container{position:relative;height:140px}
     canvas#sensorChart{width:100%!important;height:140px!important}
 
-    /* ===== LED ===== */
-    .led-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-    @media(max-width:380px){.led-row{grid-template-columns:repeat(2,1fr)}}
-    .led-tile{background:var(--card-bg);border:1.5px solid var(--card-border);border-radius:16px;padding:13px 6px;display:flex;flex-direction:column;align-items:center;gap:7px;transition:all 0.3s;}
-    [data-theme="dark"] .led-tile{box-shadow:0 2px 12px rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,200,230,0.03)}
-    .led-tile.on-green{border-color:#A5D6A7;background:#F1F8E9}
-    [data-theme="dark"] .led-tile.on-green{border-color:#2E7D32;background:#0A1F0A;box-shadow:0 0 0 1px #2E7D32,0 0 20px rgba(76,175,80,0.2)}
-    .led-tile.on-yellow{border-color:#FFE082;background:#FFFDE7}
-    [data-theme="dark"] .led-tile.on-yellow{border-color:#F9A825;background:#1A1500;box-shadow:0 0 0 1px #F9A825,0 0 20px rgba(255,193,7,0.2)}
-    .led-tile.on-red{border-color:#EF9A9A;background:#FFEBEE}
-    [data-theme="dark"] .led-tile.on-red{border-color:#C62828;background:#1A0505;box-shadow:0 0 0 1px #C62828,0 0 20px rgba(244,67,54,0.2)}
-    .led-tile.on-blue{border-color:#90CAF9;background:#E3F2FD}
-    [data-theme="dark"] .led-tile.on-blue{border-color:#1565C0;background:#050F1A;box-shadow:0 0 0 1px #1565C0,0 0 20px rgba(33,150,243,0.2)}
-    .lorb{width:26px;height:26px;border-radius:50%;background:var(--bg);border:2px solid var(--card-border);transition:all 0.4s}
-    [data-theme="dark"] .lorb{background:#2A1038;border-color:#4A2560}
-    .lorb.led-green{background:#4CAF50;border-color:#388E3C;box-shadow:0 0 14px rgba(76,175,80,0.7)}
-    .lorb.led-yellow{background:#FFC107;border-color:#F9A825;box-shadow:0 0 14px rgba(255,193,7,0.7)}
-    .lorb.led-red{background:#F44336;border-color:#C62828;box-shadow:0 0 14px rgba(244,67,54,0.7)}
-    .lorb.led-blue{background:#2196F3;border-color:#1565C0;box-shadow:0 0 14px rgba(33,150,243,0.7)}
-    .lname{font-size:0.67rem;font-weight:800;color:var(--ink-2)}
-    .lstate{font-size:0.53rem;color:var(--ink-3);transition:color 0.3s}.lstate.on{color:var(--sage)}
-    .lbadge{font-family:'DM Mono',monospace;font-size:0.43rem;padding:2px 6px;border-radius:6px;text-align:center;background:var(--bg);color:var(--ink-3);border:1px solid var(--card-border);transition:all 0.3s}
-    [data-theme="dark"] .lbadge{background:#1E0A2A;border-color:#3A1F4A}
-    .lbadge.active{background:var(--sage-lt);color:var(--sage);border-color:var(--sage-md)}
-    [data-theme="dark"] .lbadge.active{border-color:#186644}
+    /* ===== LED INDIKATOR (NEW) ===== */
+    .led-card{background:var(--card-bg);border:1.5px solid var(--card-border);border-radius:var(--r-lg);padding:15px;position:relative;overflow:hidden;}
+    [data-theme="dark"] .led-card{box-shadow:0 2px 20px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,200,230,0.03)}
+    .led-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(98,196,164,0.5),rgba(176,127,212,0.4),transparent);}
+    .led-indicator-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+    @media(max-width:380px){.led-indicator-row{grid-template-columns:repeat(2,1fr)}}
+    .led-ind{background:var(--bg);border:1.5px solid var(--card-border);border-radius:14px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.25s;}
+    [data-theme="dark"] .led-ind{background:#160A1E;border-color:#3A1F4A}
+    .led-ind.ind-on-green{border-color:#A5D6A7;background:#F1F8E9}
+    [data-theme="dark"] .led-ind.ind-on-green{border-color:#2E7D32;background:#0A1F0A;box-shadow:0 0 0 1px #2E7D32,0 0 18px rgba(76,175,80,0.25)}
+    .led-ind.ind-on-yellow{border-color:#FFE082;background:#FFFDE7}
+    [data-theme="dark"] .led-ind.ind-on-yellow{border-color:#F9A825;background:#1A1500;box-shadow:0 0 0 1px #F9A825,0 0 18px rgba(255,193,7,0.25)}
+    .led-ind.ind-on-red{border-color:#EF9A9A;background:#FFEBEE}
+    [data-theme="dark"] .led-ind.ind-on-red{border-color:#C62828;background:#1A0505;box-shadow:0 0 0 1px #C62828,0 0 18px rgba(244,67,54,0.25)}
+    .led-ind.ind-on-blue{border-color:#90CAF9;background:#E3F2FD}
+    [data-theme="dark"] .led-ind.ind-on-blue{border-color:#1565C0;background:#050F1A;box-shadow:0 0 0 1px #1565C0,0 0 18px rgba(33,150,243,0.25)}
+    .ind-orb{width:22px;height:22px;border-radius:50%;background:var(--line);border:2px solid var(--card-border);transition:all 0.3s;position:relative;}
+    [data-theme="dark"] .ind-orb{background:#2A1038;border-color:#4A2560}
+    /* Glow pulse saat ON */
+    .ind-orb.orb-on::after{content:'';position:absolute;inset:-4px;border-radius:50%;animation:orbGlow 1.5s ease-in-out infinite;}
+    .ind-orb.orb-green{background:#4CAF50;border-color:#388E3C;box-shadow:0 0 12px rgba(76,175,80,0.8)}
+    .ind-orb.orb-green::after{background:radial-gradient(circle,rgba(76,175,80,0.25),transparent 70%)}
+    .ind-orb.orb-yellow{background:#FFC107;border-color:#F9A825;box-shadow:0 0 12px rgba(255,193,7,0.8)}
+    .ind-orb.orb-yellow::after{background:radial-gradient(circle,rgba(255,193,7,0.25),transparent 70%)}
+    .ind-orb.orb-red{background:#F44336;border-color:#C62828;box-shadow:0 0 12px rgba(244,67,54,0.8)}
+    .ind-orb.orb-red::after{background:radial-gradient(circle,rgba(244,67,54,0.25),transparent 70%)}
+    .ind-orb.orb-blue{background:#2196F3;border-color:#1565C0;box-shadow:0 0 12px rgba(33,150,243,0.8)}
+    .ind-orb.orb-blue::after{background:radial-gradient(circle,rgba(33,150,243,0.25),transparent 70%)}
+    @keyframes orbGlow{0%,100%{opacity:0.6;transform:scale(1)}50%{opacity:1;transform:scale(1.15)}}
+    .ind-name{font-size:0.68rem;font-weight:800;color:var(--ink-2)}
+    .ind-state{font-size:0.52rem;color:var(--ink-3);transition:color 0.3s;font-family:'DM Mono',monospace}
+    .led-ind.ind-on-green .ind-state{color:#388E3C}
+    .led-ind.ind-on-yellow .ind-state{color:#E6AC00}
+    .led-ind.ind-on-red .ind-state{color:#E53935}
+    .led-ind.ind-on-blue .ind-state{color:#1E88E5}
+    .ind-badge{font-family:'DM Mono',monospace;font-size:0.42rem;padding:2px 7px;border-radius:6px;background:var(--bg);color:var(--ink-3);border:1px solid var(--card-border);transition:all 0.25s;text-align:center}
+    [data-theme="dark"] .ind-badge{background:#1E0A2A;border-color:#3A1F4A}
+    .ind-badge.badge-on{background:var(--sage-lt);color:var(--sage);border-color:var(--sage-md)}
+    [data-theme="dark"] .ind-badge.badge-on{border-color:#186644}
+    .led-source-note{font-family:'DM Mono',monospace;font-size:0.46rem;color:var(--ink-3);margin-top:10px;padding:6px 10px;background:var(--bg);border:1px solid var(--card-border);border-radius:8px;display:flex;align-items:center;gap:5px}
+    [data-theme="dark"] .led-source-note{background:#160A1E;border-color:#2E1240}
 
     /* ===== RELAY CONTROL PANEL ===== */
     .relay-card{background:var(--card-bg);border:1.5px solid var(--card-border);border-radius:var(--r-lg);padding:16px;position:relative;overflow:hidden;}
@@ -214,34 +230,22 @@
     .relay-subtitle{font-family:'DM Mono',monospace;font-size:0.46rem;color:var(--ink-3);margin-bottom:14px;letter-spacing:1px}
     .relay-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
     @media(min-width:400px){.relay-grid{grid-template-columns:repeat(4,1fr)}}
-    .relay-btn{border-radius:14px;border:1.5px solid var(--card-border);background:var(--bg);padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;transition:all 0.25s;position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;}
+    /* Relay btn: PURE CONTROLLER — tidak sebagai indikator, hanya tombol kirim perintah */
+    .relay-btn{border-radius:14px;border:1.5px solid var(--card-border);background:var(--bg);padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;}
     [data-theme="dark"] .relay-btn{background:#160A1E;border-color:#3A1F4A}
-    .relay-btn:active{transform:scale(0.95)}
-    .relay-btn.r-on{border-color:var(--sage-md);background:var(--sage-lt)}
-    [data-theme="dark"] .relay-btn.r-on{border-color:#1A6644;background:#051A12;box-shadow:0 0 0 1px #1A6644,0 0 18px rgba(98,196,164,0.2)}
-    .relay-btn.r-on-green{border-color:#A5D6A7;background:#F1F8E9}
-    [data-theme="dark"] .relay-btn.r-on-green{border-color:#2E7D32;background:#0A1F0A;box-shadow:0 0 0 1px #2E7D32,0 0 18px rgba(76,175,80,0.2)}
-    .relay-btn.r-on-yellow{border-color:#FFE082;background:#FFFDE7}
-    [data-theme="dark"] .relay-btn.r-on-yellow{border-color:#F9A825;background:#1A1500;box-shadow:0 0 0 1px #F9A825,0 0 18px rgba(255,193,7,0.2)}
-    .relay-btn.r-on-red{border-color:#EF9A9A;background:#FFEBEE}
-    [data-theme="dark"] .relay-btn.r-on-red{border-color:#C62828;background:#1A0505;box-shadow:0 0 0 1px #C62828,0 0 18px rgba(244,67,54,0.2)}
-    .relay-btn.r-on-blue{border-color:#90CAF9;background:#E3F2FD}
-    [data-theme="dark"] .relay-btn.r-on-blue{border-color:#1565C0;background:#050F1A;box-shadow:0 0 0 1px #1565C0,0 0 18px rgba(33,150,243,0.2)}
+    .relay-btn:not(.disabled-btn):hover{border-color:var(--mauv-md);background:var(--mauv-lt);transform:translateY(-1px)}
+    .relay-btn:not(.disabled-btn):active{transform:scale(0.95)}
+    /* Saat tombol ditekan (sending state) */
+    .relay-btn.sending{border-color:var(--peach-md);background:var(--peach-lt);}
+    [data-theme="dark"] .relay-btn.sending{border-color:#6B4010;background:#2A1500}
     .relay-btn.disabled-btn{opacity:0.4;cursor:not-allowed;pointer-events:none}
-    .r-orb{width:22px;height:22px;border-radius:50%;background:var(--line);border:2px solid var(--card-border);transition:all 0.35s;flex-shrink:0}
-    [data-theme="dark"] .r-orb{background:#2A1038;border-color:#3A1F4A}
-    .relay-btn.r-on-green .r-orb{background:#4CAF50;border-color:#388E3C;box-shadow:0 0 10px rgba(76,175,80,0.7)}
-    .relay-btn.r-on-yellow .r-orb{background:#FFC107;border-color:#F9A825;box-shadow:0 0 10px rgba(255,193,7,0.7)}
-    .relay-btn.r-on-red .r-orb{background:#F44336;border-color:#C62828;box-shadow:0 0 10px rgba(244,67,54,0.7)}
-    .relay-btn.r-on-blue .r-orb{background:#2196F3;border-color:#1565C0;box-shadow:0 0 10px rgba(33,150,243,0.7)}
+    .r-cmd-icon{font-size:18px;transition:transform 0.2s}
+    .relay-btn:not(.disabled-btn):active .r-cmd-icon{transform:scale(0.85)}
+    .relay-btn.sending .r-cmd-icon{animation:cmdPulse 0.5s ease-in-out}
+    @keyframes cmdPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
     .r-name{font-size:0.7rem;font-weight:800;color:var(--ink-2)}
-    .r-state{font-size:0.52rem;color:var(--ink-3);transition:color 0.3s}
-    .relay-btn.r-on-green .r-state,.relay-btn.r-on-yellow .r-state,.relay-btn.r-on-red .r-state,.relay-btn.r-on-blue .r-state{color:var(--sage)}
-    .r-desc{font-family:'DM Mono',monospace;font-size:0.42rem;color:var(--ink-3);text-align:center;transition:color 0.3s;line-height:1.4}
-    .relay-btn.r-on-green .r-desc{color:#4CAF50}
-    .relay-btn.r-on-yellow .r-desc{color:#E6AC00}
-    .relay-btn.r-on-red .r-desc{color:#E53935}
-    .relay-btn.r-on-blue .r-desc{color:#1E88E5}
+    .r-cmd-label{font-family:'DM Mono',monospace;font-size:0.48rem;color:var(--ink-3);text-align:center}
+    .relay-btn.sending .r-cmd-label{color:var(--peach)}
     .relay-alloff-btn{margin-top:10px;width:100%;padding:10px;border-radius:12px;background:var(--rose-lt);border:1.5px solid var(--rose-md);color:var(--rose);font-family:'Nunito',sans-serif;font-size:0.78rem;font-weight:800;cursor:pointer;transition:all 0.2s;display:none;}
     .relay-alloff-btn.show{display:block}
     .relay-alloff-btn:hover{background:var(--rose-md)}
@@ -329,9 +333,16 @@
       .topbar{padding:0 32px;height:60px}.tb-name{font-size:0.9rem}.tb-ic{width:38px;height:38px}
       #badge{font-size:0.56rem;padding:6px 14px}.back-btn{font-size:0.53rem;padding:7px 13px}
       .page{max-width:1200px;padding:22px 28px 60px;display:grid;grid-template-columns:1fr 1fr;gap:13px;align-items:start}
-      .hero{grid-column:1;grid-row:1}.status-row{grid-column:1;grid-row:2}.relay-card{grid-column:1;grid-row:3}.stats-strip{grid-column:1;grid-row:4}.chart-wrap{grid-column:2;grid-row:1}.log-wrap{grid-column:2;grid-row:2/4}.tbl-wrap-outer{grid-column:2;grid-row:4/5}
+      .hero{grid-column:1;grid-row:1}
+      .status-row{grid-column:1;grid-row:2}
+      .led-card{grid-column:1;grid-row:3}
+      .relay-card{grid-column:1;grid-row:4}
+      .stats-strip{grid-column:1;grid-row:5}
+      .chart-wrap{grid-column:2;grid-row:1}
+      .log-wrap{grid-column:2;grid-row:2/4}
+      .tbl-wrap-outer{grid-column:2;grid-row:4/6}
       .hn-val{font-size:3.8rem}.hero{padding:26px}
-      #log{height:200px}.tbl-inner{max-height:320px}.led-tile{padding:15px 8px}.lorb{width:28px;height:28px}.stb-val{font-size:1.5rem}.chart-container{height:160px}
+      #log{height:200px}.tbl-inner{max-height:320px}.stb-val{font-size:1.5rem}.chart-container{height:160px}
       canvas#sensorChart{height:160px!important}
       .relay-grid{grid-template-columns:repeat(4,1fr)!important}
       .modal-overlay{align-items:center;padding:0}.modal-box,.csv-modal-box{border-radius:26px}
@@ -490,37 +501,72 @@
       <div class="chart-container"><canvas id="sensorChart"></canvas></div>
     </div>
 
+    <!-- LED INDIKATOR (REALTIME dari ESP32) -->
+    <div class="led-card">
+      <div class="relay-header">
+        <div class="sec-hd" style="margin-bottom:0;flex:none">Indikator LED</div>
+        <div id="led-mode-badge" style="font-family:'DM Mono',monospace;font-size:0.46rem;color:var(--ink-3);padding:3px 9px;background:var(--bg);border:1px solid var(--card-border);border-radius:8px">Menunggu...</div>
+      </div>
+      <div class="led-indicator-row">
+        <div class="led-ind" id="lind1">
+          <div class="ind-orb" id="indorb1"></div>
+          <div class="ind-name">LED 1</div>
+          <div class="ind-state" id="indstate1">OFF</div>
+          <div class="ind-badge" id="indbadge1">20–25°C</div>
+        </div>
+        <div class="led-ind" id="lind2">
+          <div class="ind-orb" id="indorb2"></div>
+          <div class="ind-name">LED 2</div>
+          <div class="ind-state" id="indstate2">OFF</div>
+          <div class="ind-badge" id="indbadge2">25–30°C</div>
+        </div>
+        <div class="led-ind" id="lind3">
+          <div class="ind-orb" id="indorb3"></div>
+          <div class="ind-name">LED 3</div>
+          <div class="ind-state" id="indstate3">OFF</div>
+          <div class="ind-badge" id="indbadge3">&gt;30°C</div>
+        </div>
+        <div class="led-ind" id="lind4">
+          <div class="ind-orb" id="indorb4"></div>
+          <div class="ind-name">LED 4</div>
+          <div class="ind-state" id="indstate4">OFF</div>
+          <div class="ind-badge" id="indbadge4">Sistem</div>
+        </div>
+      </div>
+      <div class="led-source-note">
+        <span>📡</span>
+        <span id="led-source-txt">Indikator LED mencerminkan state aktual dari ESP32 secara realtime.</span>
+      </div>
+    </div>
+
     <!-- RELAY CONTROL PANEL -->
     <div class="relay-card">
       <div class="relay-header">
         <div class="sec-hd" style="margin-bottom:0;flex:none">Kontrol Relay</div>
         <div class="relay-mode-warn" id="relay-warn">⚠ Mode MANUAL</div>
       </div>
-      <div class="relay-subtitle">Kirim perintah ke ESP32 via MQTT → smk/iot/kontrol/pratiwi</div>
+      <div class="relay-subtitle">Kirim perintah ke ESP32 via MQTT · Hanya aktif di mode MANUAL</div>
       <div class="relay-grid">
+        <!-- Relay btn sebagai PURE CONTROLLER (kirim perintah saja, indikator di atas) -->
         <button class="relay-btn disabled-btn" id="rbtn1" onclick="toggleRelay(1)">
-          <div class="r-orb" id="rorb1"></div>
+          <div class="r-cmd-icon">🟢</div>
           <div class="r-name">Relay 1</div>
-          <div class="r-state" id="rstate1">OFF</div>
-          <div class="r-desc" id="rdesc1">20–25°C</div>
+          <div class="r-cmd-label" id="rcmd1">Kirim Toggle</div>
         </button>
         <button class="relay-btn disabled-btn" id="rbtn2" onclick="toggleRelay(2)">
-          <div class="r-orb" id="rorb2"></div>
+          <div class="r-cmd-icon">🟡</div>
           <div class="r-name">Relay 2</div>
-          <div class="r-state" id="rstate2">OFF</div>
-          <div class="r-desc" id="rdesc2">25–30°C</div>
+          <div class="r-cmd-label" id="rcmd2">Kirim Toggle</div>
         </button>
         <button class="relay-btn disabled-btn" id="rbtn3" onclick="toggleRelay(3)">
-          <div class="r-orb" id="rorb3"></div>
+          <div class="r-cmd-icon">🔴</div>
           <div class="r-name">Relay 3</div>
-          <div class="r-state" id="rstate3">OFF</div>
-          <div class="r-desc" id="rdesc3">&gt;30°C</div>
+          <div class="r-cmd-label" id="rcmd3">Kirim Toggle</div>
         </button>
         <button class="relay-btn disabled-btn" id="rbtn4" onclick="toggleRelay(4)">
-          <div class="r-orb" id="rorb4"></div>
+          <div class="r-cmd-icon">🔵</div>
           <div class="r-name">Relay 4</div>
-          <div class="r-state" id="rstate4">OFF</div>
-          <div class="r-desc" id="rdesc4">Sistem ON</div>
+          <div class="r-cmd-label" id="rcmd4">Kirim Toggle</div>
         </button>
       </div>
       <button class="relay-alloff-btn disabled-btn" id="relay-alloff" onclick="allRelayOff()">⏹ Matikan Semua Relay</button>
@@ -618,9 +664,9 @@ let cl=null,conn=false,mc=parseInt(localStorage.getItem('msg_count'))||0;
 let st=null,ui=null,lastStatus='',manualDisconnect=false;
 let history=[],nextId=1,lastTableTime=0;
 const tableInterval=3000;
-// Relay state (0-indexed), sesuai ESP32 relayState[4]
+// Relay state (0-indexed) — diperbarui dari ESP32
 let relayState=[false,false,false,false];
-let currentMode='idle'; // idle | manual | auto
+let currentMode='idle';
 
 /* ===== MODAL: DELETE ===== */
 let pendingDeleteIds=null;
@@ -651,53 +697,71 @@ function exportCSV(){
   document.getElementById('csv-info').innerHTML=`<b>File:</b> ${fn}<br><b>Baris:</b> ${history.length} data<br><b>Kolom:</b> #, Waktu, Suhu, Hum, Cahaya, Mode, LED`;
   const isMobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
   document.getElementById('csv-note').textContent=isMobile
-    ?'Di HP: gunakan tombol "Share" jika muncul, atau file tersimpan di Downloads.'
+    ?'Tap Download — file tersimpan otomatis di folder Downloads / Files.'
     :'File CSV langsung diunduh ke komputer Anda.';
   document.getElementById('csv-modal').classList.add('show');
 }
 function closeCsvModal(){document.getElementById('csv-modal').classList.remove('show');}
 document.getElementById('csv-modal').addEventListener('click',function(e){if(e.target===this)closeCsvModal();});
 
-async function doExportCSV(){
-  closeCsvModal();if(history.length===0)return;
-  const h=['#','Waktu','Suhu(°C)','Hum(%)','Cahaya','Mode','LED'];
+function doExportCSV(){
+  closeCsvModal();
+  if(history.length===0)return;
+  const BOM='\uFEFF';
+  const h=['#','Waktu','Suhu(C)','Hum(%)','Cahaya','Mode','LED'];
   const rows=history.map(r=>[r.id,r.ts,r.suhu,r.hum,r.cahaya,r.mode||'-',r.led]);
-  const csv=[h,...rows].map(r=>r.join(',')).join('\n');
-  const csvContent='\uFEFF'+csv; // BOM for Excel
+  const csv=BOM+[h,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
   const fn=`iot-k6-${new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')}.csv`;
 
-  // Coba Web Share API dulu (Android/iOS Chrome, Safari)
-  if(navigator.canShare){
+  // ---- STRATEGI 1: Web Share API (paling reliable di Android/iOS) ----
+  if(typeof navigator.share==='function'&&typeof navigator.canShare==='function'){
     try{
-      const blob=new Blob([csvContent],{type:'text/csv;charset=utf-8;'});
+      const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
       const file=new File([blob],fn,{type:'text/csv'});
       if(navigator.canShare({files:[file]})){
-        await navigator.share({files:[file],title:'Data IoT Kelompok 6',text:'Export data sensor IoT'});
-        showAlert('✅ File CSV dibagikan!','green');return;
+        navigator.share({files:[file],title:'Data IoT K6',text:'Export data sensor'})
+          .then(()=>showAlert('✅ File CSV dibagikan!','green'))
+          .catch(e=>{if(e.name!=='AbortError')csvFallback(csv,fn);});
+        return;
       }
-    }catch(e){if(e.name!=='AbortError'){/* lanjut ke fallback */}}
+    }catch(e){/* lanjut ke fallback */}
   }
+  csvFallback(csv,fn);
+}
 
-  // Fallback: Blob URL download
+function csvFallback(csv,fn){
+  // ---- STRATEGI 2: Blob + anchor click (Chrome desktop, Firefox) ----
   try{
-    const blob=new Blob([csvContent],{type:'text/csv;charset=utf-8;'});
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
-    a.href=url;a.download=fn;a.rel='noopener';
-    a.style.cssText='position:fixed;left:-9999px;top:-9999px;opacity:0';
+    a.setAttribute('href',url);
+    a.setAttribute('download',fn);
+    a.style.position='fixed';a.style.left='-9999px';a.style.opacity='0';
     document.body.appendChild(a);
-    // Dispatch click event (lebih reliable di mobile)
-    a.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window}));
-    showAlert('✅ CSV sedang diunduh ke Downloads!','green');
-    setTimeout(()=>{try{document.body.removeChild(a);URL.revokeObjectURL(url);}catch(e){}},8000);
+    // Trigger click via requestAnimationFrame agar lebih reliable di mobile browser
+    requestAnimationFrame(()=>{
+      a.click();
+      showAlert('✅ CSV sedang diunduh!','green');
+      setTimeout(()=>{
+        try{document.body.removeChild(a);URL.revokeObjectURL(url);}catch(e){}
+      },5000);
+    });
   }catch(e){
-    // Ultimate fallback: data URI (buka di tab baru)
+    // ---- STRATEGI 3: data: URI (Safari iOS fallback) ----
     try{
-      const uri='data:text/csv;charset=utf-8,'+encodeURIComponent(csvContent);
-      const w=window.open(uri,'_blank');
-      if(w)showAlert('📂 CSV dibuka di tab baru — simpan manual (Share/Save)','yellow');
-      else showAlert('⚠ Popup diblokir browser. Izinkan popup lalu coba lagi.','red');
-    }catch(e2){showAlert('⚠ Gagal export. Coba di browser lain.','red');}
+      const encoded=encodeURIComponent(csv);
+      const uri='data:text/csv;charset=utf-8,'+encoded;
+      // Safari tidak bisa download langsung, buka di tab baru
+      const w=window.open('','_blank');
+      if(w){
+        w.document.write('<pre>'+csv.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</pre>');
+        w.document.title=fn;
+        showAlert('📂 Buka tab baru → Simpan halaman sebagai '+fn,'yellow');
+      }else{
+        showAlert('⚠ Popup diblokir. Izinkan popup browser lalu coba lagi.','red');
+      }
+    }catch(e2){showAlert('⚠ Gagal export. Coba browser Chrome/Firefox.','red');}
   }
 }
 
@@ -710,22 +774,14 @@ function loadChartFromStorage(){
   try{
     const raw=localStorage.getItem(CHART_KEY);if(!raw)return;
     const obj=JSON.parse(raw);
-    chartData.labels=obj.labels||[];
-    chartData.suhu=obj.suhu||[];
-    chartData.hum=obj.hum||[];
-    // Potong agar tidak melebihi MAX_CHART_PTS
+    chartData.labels=obj.labels||[];chartData.suhu=obj.suhu||[];chartData.hum=obj.hum||[];
     if(chartData.labels.length>MAX_CHART_PTS){
       const excess=chartData.labels.length-MAX_CHART_PTS;
-      chartData.labels=chartData.labels.slice(excess);
-      chartData.suhu=chartData.suhu.slice(excess);
-      chartData.hum=chartData.hum.slice(excess);
+      chartData.labels=chartData.labels.slice(excess);chartData.suhu=chartData.suhu.slice(excess);chartData.hum=chartData.hum.slice(excess);
     }
   }catch(e){}
 }
-function saveChartToStorage(){
-  try{localStorage.setItem(CHART_KEY,JSON.stringify(chartData));}catch(e){}
-}
-
+function saveChartToStorage(){try{localStorage.setItem(CHART_KEY,JSON.stringify(chartData));}catch(e){}}
 function initChart(){
   loadChartFromStorage();
   const ctx=document.getElementById('sensorChart').getContext('2d');
@@ -789,7 +845,6 @@ function loadHistory(){
     rebuildTable();
     const lu=localStorage.getItem('last_update');if(lu)document.getElementById('lu').textContent=lu;
     updateSelInfo();document.getElementById('mc').textContent=mc;
-    // Pulihkan sensor terakhir ke hero display
     const last=localStorage.getItem('last_sensor');
     if(last){
       const d=JSON.parse(last);
@@ -803,9 +858,8 @@ function loadHistory(){
       }
       if(d.led){
         const ls=parseLedField(d.led);
-        if(d.mode==='manual')updLEDsManual(ls);
-        else updLEDsAuto(d.suhu||0);
         relayState=ls;
+        renderLEDIndicators(ls);
         renderRelayButtons();
       }
     }
@@ -824,8 +878,10 @@ function rebuildTable(){
 function makeRow(r){
   const tr=document.createElement('tr');tr.dataset.id=r.id;
   const badge=r.cahaya==='TERANG'?`<span class="bt">☀️ Terang</span>`:`<span class="bg2b">🌙 Gelap</span>`;
-  const modeBadge=r.mode==='manual'?`<span style="color:var(--peach);background:var(--peach-lt);border:1px solid var(--peach-md);border-radius:6px;font-size:0.53rem;padding:2px 8px;display:inline-block">🎛 Manual</span>`
-    :r.mode==='auto'?`<span style="color:var(--sage);background:var(--sage-lt);border:1px solid var(--sage-md);border-radius:6px;font-size:0.53rem;padding:2px 8px;display:inline-block">🤖 Auto</span>`
+  const modeBadge=r.mode==='manual'
+    ?`<span style="color:var(--peach);background:var(--peach-lt);border:1px solid var(--peach-md);border-radius:6px;font-size:0.53rem;padding:2px 8px;display:inline-block">🎛 Manual</span>`
+    :r.mode==='auto'
+    ?`<span style="color:var(--sage);background:var(--sage-lt);border:1px solid var(--sage-md);border-radius:6px;font-size:0.53rem;padding:2px 8px;display:inline-block">🤖 Auto</span>`
     :`<span style="color:var(--ink-3);font-size:0.53rem">—</span>`;
   tr.innerHTML=`<td class="cb-col"><input type="checkbox" class="row-cb" data-id="${r.id}"></td><td>${r.id}</td><td>${r.ts}</td><td class="suhu-cell">${r.suhu}</td><td class="hum-cell">${r.hum}</td><td>${badge}</td><td>${modeBadge}</td><td>${r.led}</td>`;
   const cb=tr.querySelector('.row-cb');
@@ -867,64 +923,112 @@ function deleteSelected(){
   showDelModal(new Set(cbs.map(c=>+c.dataset.id)));
 }
 
-/* ===== RELAY CONTROL ===== */
-// Warna per relay: 1=green, 2=yellow, 3=red, 4=blue
-const RELAY_COLORS=['green','yellow','red','blue'];
-const RELAY_TILE_CLASSES=['on-green','on-yellow','on-red','on-blue'];
-const RELAY_DESC=['20–25°C','25–30°C','>30°C','Sistem ON'];
+/* ===== LED INDIKATOR (Realtime dari ESP32) ===== */
+const LED_COLORS=['green','yellow','red','blue'];
+const LED_IND_CLASSES=['ind-on-green','ind-on-yellow','ind-on-red','ind-on-blue'];
+const LED_ORB_CLASSES=['orb-green','orb-yellow','orb-red','orb-blue'];
 
+function renderLEDIndicators(state){
+  // state: array of 4 booleans [led1, led2, led3, led4]
+  const mode=currentMode;
+  for(let i=0;i<4;i++){
+    const tile=document.getElementById('lind'+(i+1));
+    const orb=document.getElementById('indorb'+(i+1));
+    const stateEl=document.getElementById('indstate'+(i+1));
+    const badge=document.getElementById('indbadge'+(i+1));
+    // Reset
+    tile.className='led-ind';
+    orb.className='ind-orb';
+    badge.className='ind-badge';
+    if(state[i]){
+      tile.classList.add(LED_IND_CLASSES[i]);
+      orb.classList.add(LED_ORB_CLASSES[i],'orb-on');
+      stateEl.textContent='ON';
+      badge.classList.add('badge-on');
+      badge.textContent='AKTIF';
+    }else{
+      stateEl.textContent='OFF';
+      // Restore label default
+      const labels=['20–25°C','25–30°C','>30°C','Sistem'];
+      badge.textContent=labels[i];
+    }
+  }
+  // Update source note
+  const src=document.getElementById('led-source-txt');
+  const modeBadge=document.getElementById('led-mode-badge');
+  const anyOn=state.some(s=>s);
+  if(mode==='auto'){
+    src.textContent='LED dikontrol otomatis oleh sensor suhu ESP32.';
+    modeBadge.textContent='🤖 Auto';modeBadge.style.color='var(--sage)';modeBadge.style.borderColor='var(--sage-md)';modeBadge.style.background='var(--sage-lt)';
+  }else if(mode==='manual'){
+    src.textContent='LED dikontrol manual via tombol fisik / perintah web.';
+    modeBadge.textContent='🎛 Manual';modeBadge.style.color='var(--peach)';modeBadge.style.borderColor='var(--peach-md)';modeBadge.style.background='var(--peach-lt)';
+  }else{
+    src.textContent='ESP32 idle — semua LED mati.';
+    modeBadge.textContent='💤 Idle';modeBadge.style.color='var(--ink-3)';modeBadge.style.borderColor='var(--card-border)';modeBadge.style.background='var(--bg)';
+  }
+}
+function resetLEDIndicators(){
+  renderLEDIndicators([false,false,false,false]);
+}
+
+/* ===== RELAY CONTROL (Pure Controller) ===== */
 function renderRelayButtons(){
   const isManual=(currentMode==='manual');
   const isConnected=conn;
+  const canControl=isManual&&isConnected;
   for(let i=0;i<4;i++){
     const btn=document.getElementById('rbtn'+(i+1));
-    const orb=document.getElementById('rorb'+(i+1));
-    const state=document.getElementById('rstate'+(i+1));
-    const canControl=isManual&&isConnected;
-    // Reset classes
+    const cmd=document.getElementById('rcmd'+(i+1));
     btn.className='relay-btn';
-    orb.className='r-orb';
-    if(relayState[i]){
-      btn.classList.add('r-on-'+RELAY_COLORS[i]);
-      orb.classList.add('led-'+RELAY_COLORS[i]);
-      state.textContent='ON';
-    }else{
-      state.textContent='OFF';
-    }
     if(!canControl)btn.classList.add('disabled-btn');
+    // Label tombol menunjukkan apa yang akan dikirim, bukan state saat ini
+    // State ditampilkan di LED Indikator di atas
+    cmd.textContent=canControl?'Tap → Toggle':'Nonaktif';
   }
-  // Tampilkan tombol all-off hanya jika mode manual dan ada yang ON
+  // Tombol all-off
   const anyOn=relayState.some(s=>s);
   const allOff=document.getElementById('relay-alloff');
-  allOff.classList.toggle('show',anyOn);
-  allOff.classList.toggle('disabled-btn',!(currentMode==='manual'&&conn));
+  allOff.classList.toggle('show',anyOn&&currentMode==='manual');
+  allOff.classList.toggle('disabled-btn',!canControl);
   // Warning badge
   document.getElementById('relay-warn').classList.toggle('show',currentMode==='manual');
-  // Note text
+  // Note
   const note=document.getElementById('relay-note-txt');
   if(!conn){note.innerHTML='Hubungkan ke MQTT terlebih dahulu untuk mengontrol relay.';}
-  else if(currentMode==='manual'){note.innerHTML='Mode <b>MANUAL</b> aktif. Tekan tombol untuk toggle relay di ESP32.';}
+  else if(currentMode==='manual'){note.innerHTML='Mode <b>MANUAL</b> aktif. Tap tombol untuk toggle relay di ESP32. Indikator LED di atas akan update saat ESP32 konfirmasi.';}
   else if(currentMode==='auto'){note.innerHTML='ESP32 dalam mode <b>AUTO</b>. Relay dikendalikan otomatis oleh sensor suhu.';}
-  else{note.innerHTML='ESP32 mode <b>IDLE</b>. Relay tidak aktif. Tekan Reset di ESP32 untuk ganti mode.';}
+  else{note.innerHTML='ESP32 mode <b>IDLE</b>. Relay tidak aktif.';}
 }
 
 function toggleRelay(relayNum){
   if(!conn||currentMode!=='manual')return;
   const idx=relayNum-1;
   const newState=!relayState[idx];
-  // Kirim ke ESP32 via MQTT — format: {"relay":1,"state":true}
   sendRelayCmd(relayNum,newState);
-  // Update state lokal (akan dikonfirmasi dari data balik ESP32)
+
+  // Optimistic: langsung update indikator LED tanpa tunggu konfirmasi balik
   relayState[idx]=newState;
+  renderLEDIndicators(relayState);
   renderRelayButtons();
+
+  // Animasi "sending" pada tombol
+  const btn=document.getElementById('rbtn'+relayNum);
+  const cmdLbl=document.getElementById('rcmd'+relayNum);
+  btn.classList.add('sending');
+  cmdLbl.textContent='Mengirim...';
+  setTimeout(()=>{
+    btn.classList.remove('sending');
+    cmdLbl.textContent='Tap → Toggle';
+  },600);
+
   addLog('CMD','Relay '+relayNum+' → '+(newState?'ON':'OFF'));
 }
 
 function allRelayOff(){
   if(!conn||currentMode!=='manual')return;
-  for(let i=0;i<4;i++){
-    if(relayState[i]){sendRelayCmd(i+1,false);relayState[i]=false;}
-  }
+  for(let i=0;i<4;i++){if(relayState[i]){sendRelayCmd(i+1,false);relayState[i]=false;}}
+  renderLEDIndicators(relayState);
   renderRelayButtons();
   addLog('CMD','ALL RELAY → OFF');
   showAlert('⏹ Semua relay dimatikan','yellow');
@@ -935,8 +1039,7 @@ function sendRelayCmd(relayNum,state){
   const payload=JSON.stringify({relay:relayNum,state:state});
   try{
     const msg=new Paho.Message(payload);
-    msg.destinationName=TOPIC_CMD;
-    msg.qos=1;
+    msg.destinationName=TOPIC_CMD;msg.qos=1;
     cl.send(msg);
     addLog('PUB','→ '+TOPIC_CMD+' '+payload);
   }catch(e){addLog('ERR','Gagal kirim cmd: '+e.message);}
@@ -944,34 +1047,73 @@ function sendRelayCmd(relayNum,state){
 
 /* ===== MQTT ===== */
 function toggle(){conn?doDisc():doConn();}
+
 function doConn(){
   manualDisconnect=false;badge('connecting','SYNC');btnDis(true);
+  addLog('SYS','Menghubungkan ke '+BROKER+':'+PORT+'...');
   const id='Web-'+Math.floor(Math.random()*9000+1000);
-  cl=new Paho.Client(BROKER,PORT,'/mqtt',id);
-  cl.onConnectionLost=onLost;cl.onMessageArrived=onMsg;
-  cl.connect({userName:USERNAME,password:PASSWORD,useSSL:true,onSuccess:onConn,onFailure:onFail});
+  try{
+    // Paho.Client: host, port, path, clientId
+    cl=new Paho.Client(BROKER,PORT,'/mqtt',id);
+    cl.onConnectionLost=onLost;
+    cl.onMessageArrived=onMsg;
+    cl.connect({
+      userName:USERNAME,
+      password:PASSWORD,
+      useSSL:true,
+      keepAliveInterval:30,
+      cleanSession:true,
+      reconnect:false,
+      onSuccess:onConn,
+      onFailure:onFail
+    });
+  }catch(e){
+    addLog('ERR','Gagal init client: '+e.message);
+    badge('error','ERROR');btnDis(false);
+  }
 }
 function doDisc(){
-  if(cl&&conn){manualDisconnect=true;cl.disconnect();
-  const b=document.getElementById('btn');b.textContent='Hubungkan ke MQTT';b.classList.remove('disc');b.disabled=false;badge('','OFF');
-  renderRelayButtons();}
+  if(cl&&conn){
+    manualDisconnect=true;
+    try{cl.disconnect();}catch(e){}
+    const b=document.getElementById('btn');b.textContent='Hubungkan ke MQTT';b.classList.remove('disc');b.disabled=false;
+    badge('','OFF');renderRelayButtons();
+    addLog('SYS','Koneksi diputus manual.');
+  }
 }
 function onConn(){
   conn=true;badge('connected','LIVE');
   const b=document.getElementById('btn');b.disabled=false;b.textContent='Putuskan Koneksi';b.classList.add('disc');
-  cl.subscribe(TOPIC_SUB);
-  addLog('SYS','Connected: '+BROKER);
+  cl.subscribe(TOPIC_SUB,{qos:1});
+  addLog('SYS','✅ Connected: '+BROKER);
   addLog('SYS','Subscribe: '+TOPIC_SUB);
   addLog('SYS','Publish cmd ke: '+TOPIC_CMD);
   st=Date.now();ui=setInterval(uptime,1000);
   renderRelayButtons();
+  showAlert('✅ Terhubung ke HiveMQ Cloud','green');
 }
-function onFail(e){badge('error','ERROR');addLog('SYS','Gagal: '+e.errorMessage);btnDis(false);renderRelayButtons();}
-function onLost(){
-  conn=false;badge('','OFF');btnDis(false);if(ui)clearInterval(ui);setSystemOff();
+function onFail(e){
+  badge('error','ERROR');
+  addLog('ERR','Gagal connect: '+e.errorMessage+' (code:'+e.errorCode+')');
+  btnDis(false);renderRelayButtons();
+  // Retry otomatis setelah 5 detik jika bukan manual disconnect
+  if(!manualDisconnect){
+    addLog('SYS','Retry dalam 5 detik...');
+    setTimeout(()=>{if(!conn&&!manualDisconnect)doConn();},5000);
+  }
+}
+function onLost(resp){
+  conn=false;badge('','OFF');btnDis(false);
+  if(ui){clearInterval(ui);ui=null;}
+  setSystemOff();resetLEDIndicators();
   const b=document.getElementById('btn');b.textContent='Hubungkan ke MQTT';b.classList.remove('disc');
   renderRelayButtons();
-  if(!manualDisconnect)setTimeout(doConn,3000);manualDisconnect=false;
+  if(resp.errorCode!==0)addLog('SYS','Koneksi terputus: '+resp.errorMessage);
+  if(!manualDisconnect){
+    addLog('SYS','Reconnect dalam 3 detik...');
+    setTimeout(()=>{if(!conn&&!manualDisconnect)doConn();},3000);
+  }
+  manualDisconnect=false;
 }
 
 /* ===== DATA ===== */
@@ -988,24 +1130,24 @@ function onMsg(m){
     const hum=d.kelembapan!==undefined?parseFloat(d.kelembapan):null;
     const cahaya=(d.cahaya||'').toUpperCase();
     const ledStr=d.led||'0000';
-
-    // Update currentMode & relay state dari data ESP32
-    const prevMode=currentMode;
-    currentMode=mode;
     const ls=parseLedField(ledStr);
+
+    currentMode=mode;
+    // Sinkronisasi relay state dari ESP32 (konfirmasi aktual)
     relayState=ls;
 
-    // Simpan state terakhir untuk persistensi
+    // Simpan state terakhir
     localStorage.setItem('last_sensor',JSON.stringify({suhu,hum,cahaya,mode,led:ledStr}));
 
     updModeBadge(mode,suhu);
+    // Update LED indikator REALTIME dari data ESP32 (konfirmasi aktualisasi)
+    renderLEDIndicators(ls);
     pushChartPoint(suhu,hum);
     renderRelayButtons();
 
     if(mode==='manual'){
-      addLog('MODE','MANUAL');
-      addLog('LED','L1:'+ls[0]+' L2:'+ls[1]+' L3:'+ls[2]+' L4:'+ls[3]);
-      updLEDsManual(ls);setSystemManual();
+      addLog('MODE','MANUAL · LED:'+ledStr);
+      setSystemManual();
       if(suhu!==null&&hum!==null)updSensor(suhu,hum);
       if(cahaya)updLDR(cahaya);
       if(Date.now()-lastTableTime>=tableInterval){addTableRow(now,suhu,hum,cahaya,ledStr,'manual');lastTableTime=Date.now();}
@@ -1014,16 +1156,17 @@ function onMsg(m){
       addLog('SUHU',suhu.toFixed(1)+' °C');
       addLog('HUM',hum.toFixed(1)+' %');
       addLog('LDR',cahaya||'—');
+      addLog('LED','Status: '+ledStr);
       setSystemOn(suhu);updSensor(suhu,hum);
       if(cahaya)updLDR(cahaya);
-      updLEDsAuto(suhu);cekAlert(suhu);
+      cekAlert(suhu);
       if(Date.now()-lastTableTime>=tableInterval){addTableRow(now,suhu,hum,cahaya,ledStr,'auto');lastTableTime=Date.now();}
     }else{
-      // IDLE
-      addLog('MODE','IDLE');setSystemOff();
+      addLog('MODE','IDLE');setSystemOff();resetLEDIndicators();
     }
-  }catch(e){addLog('ERR','JSON: '+e.message);}
+  }catch(e){addLog('ERR','JSON parse: '+e.message+' | raw: '+pl.slice(0,60));}
 }
+
 function parseLedField(led){
   const s=[false,false,false,false];
   if(led===undefined||led===null)return s;
@@ -1032,6 +1175,7 @@ function parseLedField(led){
   else if(typeof led==='number'){for(let i=0;i<4;i++)s[i]=!!(led&(1<<i));}
   return s;
 }
+
 function cekAlert(suhu){
   let status='';
   if(suhu>=20&&suhu<=25){status='NORMAL';if(status!==lastStatus)showAlert('🌸 Suhu Normal 20–25°C','green');}
@@ -1077,13 +1221,6 @@ function updLDR(v){
   if(v==='TERANG'){ic.textContent='☀️';pl.textContent='Terang';}else{ic.textContent='🌙';pl.textContent='Gelap';}
 }
 
-/* LED display sudah dihapus — fungsi berikut hanya jaga agar tidak error jika dipanggil */
-function updLEDsAuto(suhu){/* indikator via relay panel */}
-function updLEDsManual(state){/* indikator via relay panel */}
-function setLED(i,color,tile){}
-function clearLED(i){}
-function resetAllLED(){}
-
 /* ===== UTILS ===== */
 function badge(cls,txt){document.getElementById('badge').className=cls;document.getElementById('btext').textContent=txt;}
 function btnDis(d){document.getElementById('btn').disabled=d;}
@@ -1102,6 +1239,7 @@ function showAlert(t,type){const div=document.createElement('div');div.className
 window.addEventListener('load',()=>{
   loadHistory();
   loadChartJS(()=>initChart());
+  resetLEDIndicators();
   renderRelayButtons();
 });
 </script>
