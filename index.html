@@ -89,31 +89,25 @@
 
     .page{max-width:540px;margin:0 auto;padding:14px 12px 60px;display:flex;flex-direction:column;gap:11px;position:relative;z-index:1}
 
-    /* ===== HERO — REDESIGNED ===== */
+    /* ===== HERO ===== */
     .hero{
       background:linear-gradient(150deg,#2A0840 0%,#4A1070 45%,#1E0635 100%);
       border-radius:var(--r-lg);padding:0;position:relative;overflow:hidden;
       border:1px solid rgba(255,255,255,0.08);
       box-shadow:0 8px 40px rgba(60,10,90,0.3),0 2px 0 rgba(255,255,255,0.06) inset;
     }
-    /* Decorative top line */
     .hero::before{content:'';position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent 5%,rgba(232,86,122,0.8) 35%,rgba(155,111,212,0.7) 65%,transparent 95%);z-index:3;}
-    /* Stars */
     .hero::after{content:'✦  ·  ✦  ·  ✦';position:absolute;bottom:14px;right:16px;font-size:7px;color:rgba(255,200,230,0.18);letter-spacing:4px;pointer-events:none;}
     .hero-orbs{position:absolute;inset:0;pointer-events:none;overflow:hidden}
     .ho1{position:absolute;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(232,86,122,0.22),transparent 65%);right:-80px;top:-80px;}
     .ho2{position:absolute;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(74,158,232,0.15),transparent 65%);left:-50px;bottom:-50px;}
     .ho3{position:absolute;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(155,111,212,0.18),transparent 65%);right:30%;top:10%;}
-
-    /* Hero top bar */
     .hero-topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 0;position:relative;z-index:2;}
     .hero-eyebrow{font-family:var(--mono);font-size:0.44rem;letter-spacing:3px;text-transform:uppercase;color:rgba(255,200,230,0.45);}
     .hero-live-badge{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,200,220,0.14);border-radius:20px;padding:5px 11px;}
     .hero-live-dot{width:5px;height:5px;border-radius:50%;background:rgba(255,220,235,0.22);transition:all 0.4s;}
     .hero-live-dot.on{background:var(--sage);animation:blink 1.8s infinite}.hero-live-dot.manual{background:var(--peach);animation:blink 1s infinite}
     .hero-live-txt{font-family:var(--mono);font-size:0.44rem;color:rgba(255,200,230,0.6);}
-
-    /* Main numbers */
     .hero-sensors{display:grid;grid-template-columns:1fr 1fr;padding:14px 18px 16px;position:relative;z-index:2;gap:0;}
     .hero-sensor-block{padding:0;}
     .hero-sensor-block:first-child{border-right:1px solid rgba(255,200,220,0.09);padding-right:14px;margin-right:2px;}
@@ -129,17 +123,12 @@
     .hsb-bar{height:3px;border-radius:3px;background:rgba(255,200,220,0.1);overflow:hidden;}
     .hsb-fill-suhu{height:100%;border-radius:3px;background:linear-gradient(90deg,#FFAAC5,#E8567A);width:0%;transition:width 0.9s cubic-bezier(.4,0,.2,1)}
     .hsb-fill-hum{height:100%;border-radius:3px;background:linear-gradient(90deg,#90C8F0,#4A9EE8);width:0%;transition:width 0.9s cubic-bezier(.4,0,.2,1)}
-
-    /* Hero info strip */
     .hero-strip{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;background:rgba(0,0,0,0.18);border-top:1px solid rgba(255,200,220,0.07);padding:11px 18px;position:relative;z-index:2;gap:4px;}
     .hs-divider{width:1px;height:28px;background:rgba(255,200,220,0.1);}
-
-    /* LDR Block — prettified */
     .ldr-block{display:flex;align-items:center;gap:9px;}
     .ldr-icon-wrap{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;transition:all 0.4s;}
     .ldr-icon-wrap.terang{background:linear-gradient(135deg,rgba(232,160,32,0.25),rgba(232,160,32,0.12));border:1px solid rgba(232,160,32,0.3);}
     .ldr-icon-wrap.gelap{background:linear-gradient(135deg,rgba(155,111,212,0.22),rgba(74,158,232,0.14));border:1px solid rgba(155,111,212,0.25);}
-    .ldr-text{}
     .ldr-sublabel{font-family:var(--mono);font-size:0.4rem;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,200,230,0.35);margin-bottom:2px;}
     .ldr-value{font-size:0.8rem;font-weight:700;color:rgba(255,245,252,0.88);line-height:1.2;transition:color 0.4s;}
     .ldr-value.terang{color:#FFD87A;}
@@ -148,8 +137,6 @@
     .ldr-pill.terang{background:rgba(232,160,32,0.18);color:rgba(255,210,100,0.8);border:1px solid rgba(232,160,32,0.25);}
     .ldr-pill.gelap{background:rgba(155,111,212,0.18);color:rgba(190,155,245,0.8);border:1px solid rgba(155,111,212,0.22);}
     .ldr-pill.waiting{background:rgba(255,255,255,0.05);color:rgba(200,180,220,0.4);border:1px solid rgba(255,255,255,0.07);}
-
-    /* Update time block */
     .update-block{text-align:right;}
     .update-sublabel{font-family:var(--mono);font-size:0.4rem;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,200,230,0.32);margin-bottom:3px;}
     .update-time{font-family:var(--mono);font-size:0.78rem;font-weight:500;color:rgba(255,245,252,0.75);line-height:1;}
@@ -166,7 +153,6 @@
     .st-val{font-size:0.78rem;font-weight:700;color:var(--ink-3);transition:color 0.3s}
     .st-pill.active-sage .st-val{color:var(--sage)}.st-pill.active-peach .st-val{color:var(--peach)}
     .st-note{font-size:0.56rem;color:var(--ink-3);margin-top:1px}
-
     .sec-hd{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:0.46rem;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-3)}
     .sec-hd::after{content:'';flex:1;height:1px;background:var(--card-border)}
 
@@ -299,9 +285,101 @@
     .csv-info{font-family:var(--mono);font-size:0.58rem;color:var(--ink-3);background:var(--bg);border:1px solid var(--card-border);border-radius:9px;padding:10px 11px;margin-bottom:14px;line-height:1.9}
     .csv-info b{color:var(--sage)}
 
+    /* =========================================================
+       MODAL LDR GELAP — dark-night themed
+       ========================================================= */
+    #ldr-dark-modal .modal-box{
+      background:linear-gradient(160deg,#14082A 0%,#1E0A3C 60%,#120620 100%);
+      border:1px solid rgba(155,111,212,0.28);
+      box-shadow:0 -8px 60px rgba(60,10,100,0.5),
+                 0 0 0 1px rgba(155,111,212,0.12),
+                 inset 0 1px 0 rgba(200,160,255,0.08);
+    }
+    /* stars top deco line */
+    #ldr-dark-modal .modal-box::before{
+      content:'';display:block;position:absolute;top:0;left:0;right:0;height:1.5px;
+      background:linear-gradient(90deg,transparent 10%,rgba(155,111,212,0.7) 40%,rgba(74,158,232,0.5) 60%,transparent 90%);
+      border-radius:26px 26px 0 0;
+    }
+    #ldr-dark-modal .modal-box{position:relative;overflow:hidden;}
+    /* tiny star layer */
+    #ldr-dark-modal .modal-box::after{
+      content:'✦ · ✦ · ✦ · ✦';
+      position:absolute;top:14px;left:50%;transform:translateX(-50%);
+      font-size:6px;color:rgba(200,160,255,0.18);letter-spacing:5px;pointer-events:none;
+      white-space:nowrap;
+    }
+    .ldr-modal-icon{
+      font-size:2.4rem;text-align:center;margin-bottom:10px;margin-top:6px;
+      animation:moonBob 3s ease-in-out infinite;display:block;
+    }
+    @keyframes moonBob{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-6px) rotate(5deg)}}
+    .ldr-modal-title{
+      font-size:1.05rem;font-weight:800;text-align:center;margin-bottom:6px;
+      background:linear-gradient(90deg,#C4A0F8,#90C8F0);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    }
+    .ldr-modal-desc{
+      font-size:0.7rem;color:rgba(210,185,235,0.65);text-align:center;
+      line-height:1.8;margin-bottom:6px;
+    }
+    .ldr-modal-info-box{
+      background:rgba(155,111,212,0.1);
+      border:1px solid rgba(155,111,212,0.2);
+      border-radius:11px;padding:10px 13px;margin-bottom:18px;
+      font-family:var(--mono);font-size:0.58rem;color:rgba(200,175,240,0.75);
+      line-height:1.8;
+    }
+    .ldr-modal-info-box span{color:rgba(200,160,255,0.95);font-weight:600;}
+    /* Countdown bar */
+    .ldr-modal-countdown{
+      height:3px;background:rgba(155,111,212,0.15);border-radius:3px;
+      margin-bottom:16px;overflow:hidden;
+    }
+    .ldr-modal-countdown-bar{
+      height:100%;background:linear-gradient(90deg,#9B6FD4,#4A9EE8);
+      border-radius:3px;width:100%;
+      transition:width linear;
+    }
+    /* Buttons — dark theme override */
+    .ldr-modal-btn-reject{
+      padding:12px;border-radius:12px;
+      background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.1);
+      color:rgba(210,185,235,0.65);
+      font-family:var(--font);font-size:0.83rem;font-weight:700;
+      cursor:pointer;transition:all 0.18s;
+    }
+    .ldr-modal-btn-reject:hover{background:rgba(255,255,255,0.09);color:rgba(210,185,235,0.9);}
+    .ldr-modal-btn-confirm{
+      padding:12px;border-radius:12px;
+      background:linear-gradient(135deg,rgba(155,111,212,0.9),rgba(74,158,232,0.85));
+      border:1px solid rgba(155,111,212,0.4);
+      color:#fff;
+      font-family:var(--font);font-size:0.83rem;font-weight:800;
+      cursor:pointer;transition:all 0.18s;
+      box-shadow:0 4px 18px rgba(155,111,212,0.35);
+    }
+    .ldr-modal-btn-confirm:hover{box-shadow:0 6px 24px rgba(155,111,212,0.55);transform:translateY(-1px);}
+    /* Relay preview pills */
+    .ldr-modal-relay-preview{
+      display:flex;gap:5px;justify-content:center;margin-bottom:14px;
+    }
+    .relay-preview-pill{
+      font-family:var(--mono);font-size:0.44rem;padding:4px 9px;border-radius:7px;
+      background:rgba(155,111,212,0.15);border:1px solid rgba(155,111,212,0.25);
+      color:rgba(190,155,245,0.8);
+      animation:pillGlow 1.8s ease-in-out infinite;
+    }
+    .relay-preview-pill:nth-child(2){animation-delay:.2s}
+    .relay-preview-pill:nth-child(3){animation-delay:.4s}
+    .relay-preview-pill:nth-child(4){animation-delay:.6s}
+    @keyframes pillGlow{0%,100%{opacity:0.6;background:rgba(155,111,212,0.12)}50%{opacity:1;background:rgba(155,111,212,0.22)}}
+
     /* ===== ALERT ===== */
     .alert-box{position:fixed;bottom:20px;right:14px;left:14px;max-width:400px;margin:0 auto;padding:11px 16px;border-radius:13px;font-weight:700;font-size:0.78rem;z-index:9990;animation:slideUp 0.3s ease;font-family:var(--font)}
     .alert-green{background:var(--sage);color:#fff}.alert-yellow{background:var(--peach);color:#fff}.alert-red{background:var(--rose);color:#fff}
+    .alert-purple{background:linear-gradient(135deg,#9B6FD4,#4A9EE8);color:#fff}
     @keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 
     /* ===== DESKTOP ===== */
@@ -321,6 +399,7 @@
       canvas#sensorChart{height:160px!important}
       .relay-grid{grid-template-columns:repeat(4,1fr)!important}
       .modal-overlay{align-items:center;padding:0}.modal-box,.csv-modal-box{border-radius:24px}
+      #ldr-dark-modal .modal-box{border-radius:24px}
     }
     @media(min-width:1200px){
       .page{max-width:1360px;grid-template-columns:1.1fr 0.9fr}
@@ -387,6 +466,42 @@
   </div>
 </div>
 
+<!-- =====================================================
+     MODAL LDR GELAP — Konfirmasi Nyalakan Semua Relay
+     ===================================================== -->
+<div class="modal-overlay" id="ldr-dark-modal">
+  <div class="modal-box">
+    <span class="ldr-modal-icon">🌙</span>
+    <div class="ldr-modal-title">Kondisi Gelap Terdeteksi!</div>
+    <div class="ldr-modal-desc">
+      Sensor LDR mendeteksi lingkungan <b style="color:rgba(200,160,255,0.95)">GELAP</b>.<br/>
+      Mode AUTO aktif. Apakah ingin menyalakan<br/>
+      <b style="color:rgba(200,160,255,0.95)">semua relay</b> sekarang?
+    </div>
+    <div class="ldr-modal-info-box">
+      <span>🌡️ Suhu:</span> <span id="ldr-modal-suhu">—</span>°C &nbsp;·&nbsp;
+      <span>💧 RH:</span> <span id="ldr-modal-hum">—</span>%<br/>
+      <span>💡 LDR:</span> <span style="color:#C4A0F8">GELAP</span> &nbsp;·&nbsp;
+      <span>⚙️ Mode:</span> <span style="color:#A8E6D0">AUTO</span>
+    </div>
+    <!-- Countdown bar (10 detik, setelah itu ditutup otomatis / tolak) -->
+    <div class="ldr-modal-countdown">
+      <div class="ldr-modal-countdown-bar" id="ldr-countdown-bar"></div>
+    </div>
+    <!-- Relay pills preview -->
+    <div class="ldr-modal-relay-preview">
+      <div class="relay-preview-pill">Relay 1 → ON</div>
+      <div class="relay-preview-pill">Relay 2 → ON</div>
+      <div class="relay-preview-pill">Relay 3 → ON</div>
+      <div class="relay-preview-pill">Relay 4 → ON</div>
+    </div>
+    <div class="modal-actions">
+      <button class="ldr-modal-btn-reject" onclick="rejectLdrDark()">Tidak, Lanjutkan Auto</button>
+      <button class="ldr-modal-btn-confirm" onclick="confirmLdrDark()">✓ Ya, Nyalakan Semua</button>
+    </div>
+  </div>
+</div>
+
 <!-- APP -->
 <div id="app" style="display:none">
   <header class="topbar">
@@ -414,7 +529,6 @@
       <div class="hero-orbs">
         <div class="ho1"></div><div class="ho2"></div><div class="ho3"></div>
       </div>
-      <!-- Top bar -->
       <div class="hero-topbar">
         <div class="hero-eyebrow">Sensor Realtime</div>
         <div class="hero-live-badge">
@@ -422,7 +536,6 @@
           <span class="hero-live-txt" id="sval">STANDBY</span>
         </div>
       </div>
-      <!-- Sensor numbers -->
       <div class="hero-sensors">
         <div class="hero-sensor-block">
           <div class="hsb-top">
@@ -447,9 +560,7 @@
           <div class="hsb-bar"><div class="hsb-fill-hum" id="hb"></div></div>
         </div>
       </div>
-      <!-- Info strip: LDR + Update -->
       <div class="hero-strip">
-        <!-- LDR -->
         <div class="ldr-block">
           <div class="ldr-icon-wrap" id="ldr-icon-wrap">💡</div>
           <div class="ldr-text">
@@ -459,7 +570,6 @@
           </div>
         </div>
         <div class="hs-divider"></div>
-        <!-- Update time -->
         <div class="update-block">
           <div class="update-sublabel">Terakhir Update</div>
           <div class="update-time" id="lu">—</div>
@@ -468,7 +578,7 @@
       </div>
     </div>
 
-    <!-- STATUS — tanpa mode (sudah ada di Mode Operasi) -->
+    <!-- STATUS -->
     <div class="status-row">
       <div class="st-pill" id="sys-pill">
         <div class="st-ico" id="sys-ico">⚡</div>
@@ -625,6 +735,17 @@ let relayState=[false,false,false,false];
 let currentMode='idle';
 let lastUpdateTimestamp=null;
 
+/* =====================================================
+   LDR GELAP STATE
+   - ldrDarkAsked: sudah pernah tanya di sesi gelap ini?
+                   reset saat cahaya kembali TERANG atau
+                   mode berubah dari AUTO
+   - ldrDarkCountdownTimer: ID interval untuk countdown bar
+   ===================================================== */
+let ldrDarkAsked=false;
+let ldrDarkCountdownTimer=null;
+const LDR_DARK_TIMEOUT_MS=15000; // 15 detik sebelum modal tutup otomatis
+
 /* ===== UPDATE AGO ===== */
 function updateAgoLabel(){
   const el=document.getElementById('lu-ago');
@@ -681,8 +802,6 @@ function doExportCSV(){
   const csv=BOM+[h,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
   const fn=`iot-k6-${new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')}.csv`;
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-
-  // ===== STRATEGI 1: Web Share API dengan Files (Android Chrome / iOS Safari 15.1+) =====
   if(typeof navigator.share==='function'&&typeof navigator.canShare==='function'){
     try{
       const file=new File([blob],fn,{type:'text/csv'});
@@ -692,61 +811,137 @@ function doExportCSV(){
           .catch(e=>{if(e.name!=='AbortError')csvDownloadDirect(blob,fn,csv);});
         return;
       }
-    }catch(e){/* lanjut */}
+    }catch(e){}
   }
-
   csvDownloadDirect(blob,fn,csv);
 }
-
 function csvDownloadDirect(blob,fn,csvText){
-  // ===== STRATEGI 2: Blob URL + <a download> (paling luas: Chrome Android, Firefox, Desktop) =====
   try{
     const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url;
-    a.download=fn;
+    const a=document.createElement('a');a.href=url;a.download=fn;
     a.style.cssText='position:fixed;left:-9999px;top:-9999px;opacity:0;';
     document.body.appendChild(a);
-    // Trigger dalam requestAnimationFrame agar reliable di mobile browser
-    requestAnimationFrame(()=>{
-      a.click();
-      setTimeout(()=>{
-        try{document.body.removeChild(a);}catch(e){}
-        URL.revokeObjectURL(url);
-      },3000);
-    });
-    showAlert('✅ CSV diunduh ke folder Downloads!','green');
-    return;
-  }catch(e){/* lanjut */}
-
-  // ===== STRATEGI 3: Data URI (Safari iOS lama, jika Blob URL gagal) =====
+    requestAnimationFrame(()=>{a.click();setTimeout(()=>{try{document.body.removeChild(a);}catch(e){}URL.revokeObjectURL(url);},3000);});
+    showAlert('✅ CSV diunduh ke folder Downloads!','green');return;
+  }catch(e){}
   try{
-    // Buat anchor dengan data: URI dan simulasi klik
     const encoded='data:text/csv;charset=utf-8,'+encodeURIComponent(csvText);
-    const a=document.createElement('a');
-    a.href=encoded;
-    a.download=fn;
+    const a=document.createElement('a');a.href=encoded;a.download=fn;
     a.style.cssText='position:fixed;left:-9999px;top:-9999px;';
-    document.body.appendChild(a);
-    a.click();
+    document.body.appendChild(a);a.click();
     setTimeout(()=>{try{document.body.removeChild(a);}catch(e){}},2000);
-    showAlert('✅ CSV sedang diunduh...','green');
-    return;
-  }catch(e){/* lanjut */}
-
-  // ===== STRATEGI 4: Buka di tab baru (Safari iOS fallback terakhir) =====
+    showAlert('✅ CSV sedang diunduh...','green');return;
+  }catch(e){}
   try{
     const w=window.open();
     if(w){
       w.document.write('<html><head><meta name="viewport" content="width=device-width"><title>'+fn+'</title></head><body><pre style="font-size:12px;white-space:pre-wrap;word-break:break-all">'+csvText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</pre></body></html>');
-      w.document.title=fn;
-      w.document.close();
+      w.document.title=fn;w.document.close();
       showAlert('📂 Tekan ikon bagikan → "Simpan ke File" untuk menyimpan','yellow');
-    }else{
-      showAlert('⚠ Popup diblokir. Izinkan popup lalu coba lagi.','red');
-    }
+    }else{showAlert('⚠ Popup diblokir. Izinkan popup lalu coba lagi.','red');}
   }catch(e){showAlert('⚠ Gagal export. Coba Chrome atau Firefox.','red');}
 }
+
+/* =====================================================
+   MODAL LDR GELAP — logic
+   ===================================================== */
+
+/**
+ * Tampilkan modal konfirmasi LDR gelap.
+ * Dipanggil dari onMsg() saat mode=auto dan cahaya=GELAP
+ * dan belum pernah tanya di sesi gelap ini (ldrDarkAsked=false).
+ */
+function showLdrDarkModal(suhu, hum){
+  // Isi info suhu/hum
+  document.getElementById('ldr-modal-suhu').textContent = suhu!==null ? suhu.toFixed(1) : '—';
+  document.getElementById('ldr-modal-hum').textContent  = hum!==null  ? hum.toFixed(1)  : '—';
+
+  // Tampilkan overlay
+  document.getElementById('ldr-dark-modal').classList.add('show');
+
+  // Mulai countdown bar animasi
+  const bar = document.getElementById('ldr-countdown-bar');
+  bar.style.transition = 'none';
+  bar.style.width = '100%';
+  // Paksa reflow sebelum set transisi
+  bar.getBoundingClientRect();
+  bar.style.transition = `width ${LDR_DARK_TIMEOUT_MS}ms linear`;
+  bar.style.width = '0%';
+
+  // Auto-tutup setelah timeout → anggap tolak
+  if(ldrDarkCountdownTimer) clearTimeout(ldrDarkCountdownTimer);
+  ldrDarkCountdownTimer = setTimeout(()=>{
+    rejectLdrDark(true); // true = timeout, bukan klik user
+  }, LDR_DARK_TIMEOUT_MS);
+
+  addLog('LDR', 'GELAP terdeteksi di mode AUTO — menunggu konfirmasi user');
+}
+
+/**
+ * User menekan "Ya, Nyalakan Semua"
+ */
+function confirmLdrDark(){
+  _closeLdrDarkModal();
+  if(!conn){
+    showAlert('⚠ Tidak terhubung ke MQTT','yellow');
+    return;
+  }
+  // Kirim semua relay ON
+  sendAllRelayOn();
+  showAlert('🌙 Gelap terdeteksi — semua relay dinyalakan!','purple');
+  addLog('LDR','User setuju → kirim semua relay ON');
+}
+
+/**
+ * User menekan "Tidak" atau timeout
+ * @param {boolean} isTimeout - true jika dipicu timeout, bukan klik
+ */
+function rejectLdrDark(isTimeout=false){
+  _closeLdrDarkModal();
+  if(isTimeout){
+    showAlert('🌙 Timeout — mode AUTO tetap berjalan normal','yellow');
+    addLog('LDR','Timeout konfirmasi → mode AUTO tetap normal');
+  }else{
+    showAlert('🌙 Mode AUTO tetap berjalan normal','yellow');
+    addLog('LDR','User menolak → mode AUTO tetap normal');
+  }
+}
+
+/** Internal: tutup modal dan bersihkan timer */
+function _closeLdrDarkModal(){
+  document.getElementById('ldr-dark-modal').classList.remove('show');
+  if(ldrDarkCountdownTimer){clearTimeout(ldrDarkCountdownTimer);ldrDarkCountdownTimer=null;}
+  // Stop bar animasi (set ke lebar saat ini supaya tidak lompat)
+  const bar=document.getElementById('ldr-countdown-bar');
+  bar.style.transition='none';
+  bar.style.width=bar.style.width; // freeze
+}
+
+/**
+ * Kirim semua relay ON ke ESP32 via MQTT.
+ * Gunakan format {"relay":N,"state":true} satu per satu
+ * agar kompatibel dengan firmware onMqttMessage() yang sudah ada.
+ */
+function sendAllRelayOn(){
+  if(!cl||!conn) return;
+  for(let i=1;i<=4;i++){
+    const payload=JSON.stringify({relay:i,state:true});
+    try{
+      const msg=new Paho.Message(payload);
+      msg.destinationName=TOPIC_CMD;msg.qos=1;cl.send(msg);
+    }catch(e){addLog('ERR','Gagal kirim relay '+i+': '+e.message);}
+  }
+  // Update state lokal
+  relayState=[true,true,true,true];
+  renderLEDIndicators(relayState);
+  renderRelayButtons();
+  addLog('CMD','ALL RELAY → ON (LDR GELAP)');
+}
+
+// Tutup modal jika klik di backdrop
+document.getElementById('ldr-dark-modal').addEventListener('click',function(e){
+  if(e.target===this) rejectLdrDark();
+});
 
 /* ===== CHART ===== */
 const MAX_CHART_PTS=30;
@@ -997,6 +1192,9 @@ function doDisc(){
     try{cl.disconnect();}catch(e){}
     const b=document.getElementById('btn');b.textContent='Hubungkan ke MQTT';b.classList.remove('disc');b.disabled=false;
     badge('','OFF');renderRelayButtons();addLog('SYS','Koneksi diputus manual.');
+    // Reset flag LDR saat disconnect
+    ldrDarkAsked=false;
+    _closeLdrDarkModal();
   }
 }
 function onConn(){
@@ -1016,6 +1214,9 @@ function onLost(resp){
   conn=false;badge('','OFF');btnDis(false);
   if(ui){clearInterval(ui);ui=null;}
   setSystemOff();resetLEDIndicators();
+  // Reset flag LDR saat koneksi terputus
+  ldrDarkAsked=false;
+  _closeLdrDarkModal();
   const b=document.getElementById('btn');b.textContent='Hubungkan ke MQTT';b.classList.remove('disc');
   renderRelayButtons();
   if(resp.errorCode!==0)addLog('SYS','Terputus: '+resp.errorMessage);
@@ -1041,12 +1242,41 @@ function onMsg(m){
     const cahaya=(d.cahaya||'').toUpperCase();
     const ledStr=d.led||'0000';
     const ls=parseLedField(ledStr);
+
+    /* ─────────────────────────────────────────────────────
+       Reset ldrDarkAsked jika:
+       1. Mode berubah dari auto ke yang lain
+       2. Cahaya kembali TERANG (dari gelap sebelumnya)
+       ───────────────────────────────────────────────────── */
+    if(currentMode==='auto' && mode!=='auto'){
+      ldrDarkAsked=false;
+    }
+    if(cahaya==='TERANG'){
+      // Saat terang, reset flag agar nanti kalau gelap lagi akan tanya lagi
+      if(ldrDarkAsked){
+        ldrDarkAsked=false;
+        addLog('LDR','Cahaya kembali TERANG — reset flag gelap');
+      }
+      // Tutup modal jika masih terbuka (misal sensor berubah cepat)
+      _closeLdrDarkModal();
+    }
+
     currentMode=mode;relayState=ls;
     localStorage.setItem('last_sensor',JSON.stringify({suhu,hum,cahaya,mode,led:ledStr}));
     updModeBadge(mode,suhu);
     renderLEDIndicators(ls);
     pushChartPoint(suhu,hum);
     renderRelayButtons();
+
+    /* ─────────────────────────────────────────────────────
+       CEK KONDISI LDR GELAP di mode AUTO
+       Tampilkan modal jika belum pernah tanya di sesi gelap ini
+       ───────────────────────────────────────────────────── */
+    if(mode==='auto' && cahaya==='GELAP' && !ldrDarkAsked){
+      ldrDarkAsked=true; // tandai sudah tanya, supaya tidak muncul lagi
+      showLdrDarkModal(suhu, hum);
+    }
+
     if(mode==='manual'){
       addLog('MODE','MANUAL · LED:'+ledStr);setSystemManual();
       if(suhu!==null&&hum!==null)updSensor(suhu,hum);
@@ -1060,9 +1290,12 @@ function onMsg(m){
       if(cahaya)updLDR(cahaya);
       cekAlert(suhu);
       if(Date.now()-lastTableTime>=tableInterval){addTableRow(now,suhu,hum,cahaya,ledStr,'auto');lastTableTime=Date.now();}
-    }else{addLog('MODE','IDLE');setSystemOff();resetLEDIndicators();}
+    }else{
+      addLog('MODE','IDLE');setSystemOff();resetLEDIndicators();
+    }
   }catch(e){addLog('ERR','JSON parse: '+e.message);}
 }
+
 function parseLedField(led){
   const s=[false,false,false,false];
   if(led===undefined||led===null)return s;
