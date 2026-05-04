@@ -329,7 +329,7 @@
       .topbar{padding:0 32px;height:60px}.tb-name{font-size:0.9rem}.tb-ic{width:38px;height:38px}
       #badge{font-size:0.56rem;padding:6px 14px}.back-btn{font-size:0.53rem;padding:7px 13px}
       .page{max-width:1200px;padding:22px 28px 60px;display:grid;grid-template-columns:1fr 1fr;gap:13px;align-items:start}
-      .hero{grid-column:1;grid-row:1}.status-row{grid-column:1;grid-row:2}.led-wrap{grid-column:1;grid-row:3}.relay-card{grid-column:1;grid-row:4}.stats-strip{grid-column:1;grid-row:5}.chart-wrap{grid-column:2;grid-row:1}.log-wrap{grid-column:2;grid-row:2/4}.tbl-wrap-outer{grid-column:2;grid-row:4/6}
+      .hero{grid-column:1;grid-row:1}.status-row{grid-column:1;grid-row:2}.relay-card{grid-column:1;grid-row:3}.stats-strip{grid-column:1;grid-row:4}.chart-wrap{grid-column:2;grid-row:1}.log-wrap{grid-column:2;grid-row:2/4}.tbl-wrap-outer{grid-column:2;grid-row:4/5}
       .hn-val{font-size:3.8rem}.hero{padding:26px}
       #log{height:200px}.tbl-inner{max-height:320px}.led-tile{padding:15px 8px}.lorb{width:28px;height:28px}.stb-val{font-size:1.5rem}.chart-container{height:160px}
       canvas#sensorChart{height:160px!important}
@@ -490,17 +490,6 @@
       <div class="chart-container"><canvas id="sensorChart"></canvas></div>
     </div>
 
-    <!-- LED -->
-    <div class="led-wrap">
-      <div class="sec-hd" style="margin-bottom:10px">Output LED / Relay</div>
-      <div class="led-row">
-        <div class="led-tile" id="tile1"><div class="lorb" id="l1"></div><div class="lname">LED 1</div><div class="lstate" id="ls1">Padam</div><div class="lbadge" id="lb1">20–25°C</div></div>
-        <div class="led-tile" id="tile2"><div class="lorb" id="l2"></div><div class="lname">LED 2</div><div class="lstate" id="ls2">Padam</div><div class="lbadge" id="lb2">25–30°C</div></div>
-        <div class="led-tile" id="tile3"><div class="lorb" id="l3"></div><div class="lname">LED 3</div><div class="lstate" id="ls3">Padam</div><div class="lbadge" id="lb3">&gt;30°C</div></div>
-        <div class="led-tile" id="tile4"><div class="lorb" id="l4"></div><div class="lname">LED 4</div><div class="lstate" id="ls4">Padam</div><div class="lbadge" id="lb4">Sistem ON</div></div>
-      </div>
-    </div>
-
     <!-- RELAY CONTROL PANEL -->
     <div class="relay-card">
       <div class="relay-header">
@@ -574,11 +563,11 @@
           <thead>
             <tr>
               <th class="cb-col"><input type="checkbox" id="chk-all" onchange="toggleAll(this)"/></th>
-              <th>#</th><th>Waktu</th><th>°C</th><th>%RH</th><th>Cahaya</th><th>LED</th>
+              <th>#</th><th>Waktu</th><th>°C</th><th>%RH</th><th>Cahaya</th><th>Mode</th><th>LED</th>
             </tr>
           </thead>
           <tbody id="tbl-body">
-            <tr><td colspan="7" class="no-data">Belum ada data.</td></tr>
+            <tr><td colspan="8" class="no-data">Belum ada data.</td></tr>
           </tbody>
         </table>
       </div>
@@ -659,7 +648,7 @@ document.getElementById('del-modal').addEventListener('click',function(e){if(e.t
 function exportCSV(){
   if(history.length===0){showAlert('Tidak ada data untuk diexport.','yellow');return;}
   const fn=`iot-k6-${new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')}.csv`;
-  document.getElementById('csv-info').innerHTML=`<b>File:</b> ${fn}<br><b>Baris:</b> ${history.length} data<br><b>Kolom:</b> #, Waktu, Suhu, Hum, Cahaya, LED`;
+  document.getElementById('csv-info').innerHTML=`<b>File:</b> ${fn}<br><b>Baris:</b> ${history.length} data<br><b>Kolom:</b> #, Waktu, Suhu, Hum, Cahaya, Mode, LED`;
   const isMobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
   document.getElementById('csv-note').textContent=isMobile
     ?'Di HP: gunakan tombol "Share" jika muncul, atau file tersimpan di Downloads.'
@@ -671,8 +660,8 @@ document.getElementById('csv-modal').addEventListener('click',function(e){if(e.t
 
 async function doExportCSV(){
   closeCsvModal();if(history.length===0)return;
-  const h=['#','Waktu','Suhu(°C)','Hum(%)','Cahaya','LED'];
-  const rows=history.map(r=>[r.id,r.ts,r.suhu,r.hum,r.cahaya,r.led]);
+  const h=['#','Waktu','Suhu(°C)','Hum(%)','Cahaya','Mode','LED'];
+  const rows=history.map(r=>[r.id,r.ts,r.suhu,r.hum,r.cahaya,r.mode||'-',r.led]);
   const csv=[h,...rows].map(r=>r.join(',')).join('\n');
   const csvContent='\uFEFF'+csv; // BOM for Excel
   const fn=`iot-k6-${new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')}.csv`;
@@ -827,7 +816,7 @@ function loadHistory(){
 function rebuildTable(){
   const tb=document.getElementById('tbl-body');tb.innerHTML='';
   if(history.length===0){
-    tb.innerHTML='<tr><td colspan="7" class="no-data">Belum ada data.</td></tr>';
+    tb.innerHTML='<tr><td colspan="8" class="no-data">Belum ada data.</td></tr>';
     document.getElementById('chk-all').checked=false;document.getElementById('del-btn').disabled=true;return;
   }
   history.forEach(r=>tb.appendChild(makeRow(r)));updateSelInfo();
@@ -835,18 +824,21 @@ function rebuildTable(){
 function makeRow(r){
   const tr=document.createElement('tr');tr.dataset.id=r.id;
   const badge=r.cahaya==='TERANG'?`<span class="bt">☀️ Terang</span>`:`<span class="bg2b">🌙 Gelap</span>`;
-  tr.innerHTML=`<td class="cb-col"><input type="checkbox" class="row-cb" data-id="${r.id}"></td><td>${r.id}</td><td>${r.ts}</td><td class="suhu-cell">${r.suhu}</td><td class="hum-cell">${r.hum}</td><td>${badge}</td><td>${r.led}</td>`;
+  const modeBadge=r.mode==='manual'?`<span style="color:var(--peach);background:var(--peach-lt);border:1px solid var(--peach-md);border-radius:6px;font-size:0.53rem;padding:2px 8px;display:inline-block">🎛 Manual</span>`
+    :r.mode==='auto'?`<span style="color:var(--sage);background:var(--sage-lt);border:1px solid var(--sage-md);border-radius:6px;font-size:0.53rem;padding:2px 8px;display:inline-block">🤖 Auto</span>`
+    :`<span style="color:var(--ink-3);font-size:0.53rem">—</span>`;
+  tr.innerHTML=`<td class="cb-col"><input type="checkbox" class="row-cb" data-id="${r.id}"></td><td>${r.id}</td><td>${r.ts}</td><td class="suhu-cell">${r.suhu}</td><td class="hum-cell">${r.hum}</td><td>${badge}</td><td>${modeBadge}</td><td>${r.led}</td>`;
   const cb=tr.querySelector('.row-cb');
   cb.addEventListener('change',onRowCheck);
   cb.addEventListener('click',e=>e.stopPropagation());
   tr.addEventListener('click',function(){cb.checked=!cb.checked;onRowCheck();});
   return tr;
 }
-function addTableRow(now,suhu,hum,cahaya,ledStr){
+function addTableRow(now,suhu,hum,cahaya,ledStr,mode){
   const names=['LED1','LED2','LED3','LED4'];let aktif=[];
   if(ledStr)ledStr.split('').forEach((v,i)=>{if(v==='1')aktif.push(names[i]);});
   const ts=now.toLocaleTimeString('id-ID',{hour12:false});
-  const row={id:nextId++,ts,suhu:suhu?suhu.toFixed(1):'-',hum:hum?hum.toFixed(1):'-',cahaya,led:aktif.length?aktif.join(','):'-'};
+  const row={id:nextId++,ts,suhu:suhu?suhu.toFixed(1):'-',hum:hum?hum.toFixed(1):'-',cahaya,mode:mode||'auto',led:aktif.length?aktif.join(','):'-'};
   history.unshift(row);if(history.length>MAX_ROWS)history=history.slice(0,MAX_ROWS);
   const tb=document.getElementById('tbl-body');
   const no=tb.querySelector('.no-data');if(no)no.parentElement.remove();
@@ -1016,7 +1008,7 @@ function onMsg(m){
       updLEDsManual(ls);setSystemManual();
       if(suhu!==null&&hum!==null)updSensor(suhu,hum);
       if(cahaya)updLDR(cahaya);
-      if(Date.now()-lastTableTime>=tableInterval){addTableRow(now,suhu,hum,cahaya,ledStr);lastTableTime=Date.now();}
+      if(Date.now()-lastTableTime>=tableInterval){addTableRow(now,suhu,hum,cahaya,ledStr,'manual');lastTableTime=Date.now();}
     }else if(mode==='auto'){
       if(suhu===null||hum===null){addLog('ERR','Data tidak lengkap');return;}
       addLog('SUHU',suhu.toFixed(1)+' °C');
@@ -1025,7 +1017,7 @@ function onMsg(m){
       setSystemOn(suhu);updSensor(suhu,hum);
       if(cahaya)updLDR(cahaya);
       updLEDsAuto(suhu);cekAlert(suhu);
-      if(Date.now()-lastTableTime>=tableInterval){addTableRow(now,suhu,hum,cahaya,ledStr);lastTableTime=Date.now();}
+      if(Date.now()-lastTableTime>=tableInterval){addTableRow(now,suhu,hum,cahaya,ledStr,'auto');lastTableTime=Date.now();}
     }else{
       // IDLE
       addLog('MODE','IDLE');setSystemOff();
@@ -1085,34 +1077,12 @@ function updLDR(v){
   if(v==='TERANG'){ic.textContent='☀️';pl.textContent='Terang';}else{ic.textContent='🌙';pl.textContent='Gelap';}
 }
 
-/* LED 1=hijau(20-25) LED 2=kuning(25-30) LED 3=merah(>30) LED 4=biru(sistem) */
-function updLEDsAuto(suhu){
-  resetAllLED();
-  document.getElementById('lb1').textContent='20–25°C';
-  document.getElementById('lb2').textContent='25–30°C';
-  document.getElementById('lb3').textContent='>30°C';
-  document.getElementById('lb4').textContent='Sistem ON';
-  if(suhu>=20&&suhu<=25)setLED(0,'led-green','on-green');
-  else if(suhu>25&&suhu<=30)setLED(1,'led-yellow','on-yellow');
-  else if(suhu>30)setLED(2,'led-red','on-red');
-  setLED(3,'led-blue','on-blue');
-}
-function updLEDsManual(state){
-  const cs=[['led-green','on-green'],['led-yellow','on-yellow'],['led-red','on-red'],['led-blue','on-blue']];
-  ['lb1','lb2','lb3','lb4'].forEach((id,i)=>document.getElementById(id).textContent='BTN '+(i+1));
-  state.forEach((on,i)=>{if(on)setLED(i,cs[i][0],cs[i][1]);else clearLED(i);});
-}
-function setLED(i,color,tile){
-  document.getElementById('l'+(i+1)).className='lorb '+color;
-  document.getElementById('ls'+(i+1)).textContent='Menyala';document.getElementById('ls'+(i+1)).className='lstate on';
-  document.getElementById('lb'+(i+1)).className='lbadge active';document.getElementById('tile'+(i+1)).className='led-tile '+tile;
-}
-function clearLED(i){
-  document.getElementById('l'+(i+1)).className='lorb';document.getElementById('ls'+(i+1)).textContent='Padam';
-  document.getElementById('ls'+(i+1)).className='lstate';document.getElementById('lb'+(i+1)).className='lbadge';
-  document.getElementById('tile'+(i+1)).className='led-tile';
-}
-function resetAllLED(){for(let i=0;i<4;i++)clearLED(i);}
+/* LED display sudah dihapus — fungsi berikut hanya jaga agar tidak error jika dipanggil */
+function updLEDsAuto(suhu){/* indikator via relay panel */}
+function updLEDsManual(state){/* indikator via relay panel */}
+function setLED(i,color,tile){}
+function clearLED(i){}
+function resetAllLED(){}
 
 /* ===== UTILS ===== */
 function badge(cls,txt){document.getElementById('badge').className=cls;document.getElementById('btext').textContent=txt;}
