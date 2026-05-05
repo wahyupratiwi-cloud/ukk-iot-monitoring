@@ -1023,20 +1023,45 @@ function onMsg(m){
     const cahaya=(d.cahaya||'').toUpperCase();
     const ledStr=d.led||'0000';
     const ls=parseLedField(ledStr);
+
+    // Set state dulu sebelum render apapun
     currentMode=mode;relayState=ls;
     localStorage.setItem('last_sensor',JSON.stringify({suhu,hum,cahaya,mode,led:ledStr}));
-    updModeBadge(mode,suhu);renderLEDIndicators(ls);pushChartPoint(suhu,hum);renderRelayButtons();
+
     if(mode==='manual'){
-      addLog('MODE','MANUAL · LED:'+ledStr);setSystemManual();
-      if(suhu!==null&&hum!==null)updSensor(suhu,hum);
+      // ── REALTIME: semua UI langsung diupdate ──
+      setSystemManual();
+      updModeBadge(mode,suhu);
+      renderLEDIndicators(ls);
+      renderRelayButtons();
+      if(suhu!==null&&hum!==null){updSensor(suhu,hum);pushChartPoint(suhu,hum);}
       if(cahaya)updLDR(cahaya);
+      addLog('MODE','MANUAL · LED:'+ledStr);
+      // ── THROTTLE: riwayat tabel saja ──
       if(Date.now()-lastTableTime>=tableInterval){addTableRow(now,suhu,hum,cahaya,ledStr,'manual');lastTableTime=Date.now();}
+
     }else if(mode==='auto'){
       if(suhu===null||hum===null){addLog('ERR','Data tidak lengkap');return;}
+      // ── REALTIME: semua UI langsung diupdate ──
+      setSystemOn(suhu);
+      updModeBadge(mode,suhu);
+      renderLEDIndicators(ls);
+      renderRelayButtons();
+      updSensor(suhu,hum);
+      pushChartPoint(suhu,hum);
+      if(cahaya)updLDR(cahaya);
+      cekAlert(suhu);
       addLog('SUHU',suhu.toFixed(1)+' °C');addLog('HUM',hum.toFixed(1)+' %');addLog('LDR',cahaya||'—');addLog('LED','Status: '+ledStr);
-      setSystemOn(suhu);updSensor(suhu,hum);if(cahaya)updLDR(cahaya);cekAlert(suhu);
+      // ── THROTTLE: riwayat tabel saja ──
       if(Date.now()-lastTableTime>=tableInterval){addTableRow(now,suhu,hum,cahaya,ledStr,'auto');lastTableTime=Date.now();}
-    }else{addLog('MODE','IDLE');setSystemOff();resetLEDIndicators();}
+
+    }else{
+      setSystemOff();
+      updModeBadge(mode,suhu);
+      resetLEDIndicators();
+      renderRelayButtons();
+      addLog('MODE','IDLE');
+    }
   }catch(e){addLog('ERR','JSON parse: '+e.message);}
 }
 function parseLedField(led){
