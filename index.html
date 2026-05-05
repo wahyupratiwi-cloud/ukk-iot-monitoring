@@ -4,7 +4,6 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>IoT Monitor — Kelompok 6</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/paho-mqtt.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -66,6 +65,9 @@
     .sp-btn:hover{transform:translateY(-2px);box-shadow:0 14px 38px rgba(232,86,122,0.48)}.sp-btn:active{transform:translateY(0)}
     .sp-tags{display:flex;gap:6px;margin-top:18px;flex-wrap:wrap;justify-content:center}
     .sp-tag{font-family:var(--mono);font-size:0.45rem;letter-spacing:1.5px;padding:4px 10px;border-radius:7px;background:rgba(255,255,255,0.04);color:rgba(210,185,225,0.5);border:1px solid rgba(255,255,255,0.08);}
+    #splash-status{margin-top:12px;font-family:var(--mono);font-size:0.46rem;color:rgba(200,155,220,0.45);text-align:center;min-height:1.2em;transition:color 0.3s;}
+    #splash-status.ok{color:rgba(61,184,138,0.7)}
+    #splash-status.err{color:rgba(232,86,122,0.7)}
 
     /* ===== TOPBAR ===== */
     .topbar{background:rgba(248,244,252,0.92);border-bottom:1.5px solid var(--line);padding:0 14px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(16px);}
@@ -90,12 +92,7 @@
     .page{max-width:540px;margin:0 auto;padding:14px 12px 60px;display:flex;flex-direction:column;gap:11px;position:relative;z-index:1}
 
     /* ===== HERO ===== */
-    .hero{
-      background:linear-gradient(150deg,#2A0840 0%,#4A1070 45%,#1E0635 100%);
-      border-radius:var(--r-lg);padding:0;position:relative;overflow:hidden;
-      border:1px solid rgba(255,255,255,0.08);
-      box-shadow:0 8px 40px rgba(60,10,90,0.3),0 2px 0 rgba(255,255,255,0.06) inset;
-    }
+    .hero{background:linear-gradient(150deg,#2A0840 0%,#4A1070 45%,#1E0635 100%);border-radius:var(--r-lg);padding:0;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,0.08);box-shadow:0 8px 40px rgba(60,10,90,0.3),0 2px 0 rgba(255,255,255,0.06) inset;}
     .hero::before{content:'';position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent 5%,rgba(232,86,122,0.8) 35%,rgba(155,111,212,0.7) 65%,transparent 95%);z-index:3;}
     .hero::after{content:'✦  ·  ✦  ·  ✦';position:absolute;bottom:14px;right:16px;font-size:7px;color:rgba(255,200,230,0.18);letter-spacing:4px;pointer-events:none;}
     .hero-orbs{position:absolute;inset:0;pointer-events:none;overflow:hidden}
@@ -217,10 +214,20 @@
     .r-name{font-size:0.68rem;font-weight:700;color:var(--ink-2)}
     .r-cmd-label{font-family:var(--mono);font-size:0.46rem;color:var(--ink-3);text-align:center}
     .relay-btn.sending .r-cmd-label{color:var(--peach)}
-    .relay-alloff-btn{margin-top:9px;width:100%;padding:9px;border-radius:11px;background:var(--rose-lt);border:1.5px solid var(--rose-md);color:var(--rose);font-family:var(--font);font-size:0.76rem;font-weight:800;cursor:pointer;transition:all 0.2s;display:none;}
-    .relay-alloff-btn.show{display:block}
+
+    /* === FIX 5: Tombol Nyalakan Semua + Matikan Semua === */
+    .relay-bulk-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
+    .relay-allon-btn,.relay-alloff-btn{
+      padding:9px;border-radius:11px;font-family:var(--font);font-size:0.76rem;font-weight:800;
+      cursor:pointer;transition:all 0.2s;border:1.5px solid;display:none;
+    }
+    .relay-allon-btn{background:var(--sage-lt);border-color:var(--sage-md);color:var(--sage);}
+    .relay-allon-btn:hover{background:var(--sage-md)}
+    .relay-alloff-btn{background:var(--rose-lt);border-color:var(--rose-md);color:var(--rose);}
     .relay-alloff-btn:hover{background:var(--rose-md)}
-    .relay-alloff-btn.disabled-btn{opacity:0.38;cursor:not-allowed;pointer-events:none}
+    .relay-allon-btn.show,.relay-alloff-btn.show{display:block}
+    .relay-allon-btn.disabled-btn,.relay-alloff-btn.disabled-btn{opacity:0.38;cursor:not-allowed;pointer-events:none}
+
     .relay-note{margin-top:9px;font-size:0.58rem;color:var(--ink-3);background:var(--bg);border:1px solid var(--card-border);border-radius:8px;padding:8px 10px;font-family:var(--mono);line-height:1.7;display:flex;align-items:flex-start;gap:6px}
 
     /* ===== STATS ===== */
@@ -285,115 +292,54 @@
     .csv-info{font-family:var(--mono);font-size:0.58rem;color:var(--ink-3);background:var(--bg);border:1px solid var(--card-border);border-radius:9px;padding:10px 11px;margin-bottom:14px;line-height:1.9}
     .csv-info b{color:var(--sage)}
 
-    /* =========================================================
-       MODAL LDR GELAP — dark-night themed
-       ========================================================= */
-    #ldr-dark-modal .modal-box{
-      background:linear-gradient(160deg,#14082A 0%,#1E0A3C 60%,#120620 100%);
-      border:1px solid rgba(155,111,212,0.28);
-      box-shadow:0 -8px 60px rgba(60,10,100,0.5),
-                 0 0 0 1px rgba(155,111,212,0.12),
-                 inset 0 1px 0 rgba(200,160,255,0.08);
-    }
-    /* stars top deco line */
-    #ldr-dark-modal .modal-box::before{
-      content:'';display:block;position:absolute;top:0;left:0;right:0;height:1.5px;
-      background:linear-gradient(90deg,transparent 10%,rgba(155,111,212,0.7) 40%,rgba(74,158,232,0.5) 60%,transparent 90%);
-      border-radius:26px 26px 0 0;
-    }
+    /* ===== MODAL LDR GELAP ===== */
+    #ldr-dark-modal .modal-box{background:linear-gradient(160deg,#14082A 0%,#1E0A3C 60%,#120620 100%);border:1px solid rgba(155,111,212,0.28);box-shadow:0 -8px 60px rgba(60,10,100,0.5),0 0 0 1px rgba(155,111,212,0.12),inset 0 1px 0 rgba(200,160,255,0.08);}
+    #ldr-dark-modal .modal-box::before{content:'';display:block;position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent 10%,rgba(155,111,212,0.7) 40%,rgba(74,158,232,0.5) 60%,transparent 90%);border-radius:26px 26px 0 0;}
     #ldr-dark-modal .modal-box{position:relative;overflow:hidden;}
-    /* tiny star layer */
-    #ldr-dark-modal .modal-box::after{
-      content:'✦ · ✦ · ✦ · ✦';
-      position:absolute;top:14px;left:50%;transform:translateX(-50%);
-      font-size:6px;color:rgba(200,160,255,0.18);letter-spacing:5px;pointer-events:none;
-      white-space:nowrap;
-    }
-    .ldr-modal-icon{
-      font-size:2.4rem;text-align:center;margin-bottom:10px;margin-top:6px;
-      animation:moonBob 3s ease-in-out infinite;display:block;
-    }
+    #ldr-dark-modal .modal-box::after{content:'✦ · ✦ · ✦ · ✦';position:absolute;top:14px;left:50%;transform:translateX(-50%);font-size:6px;color:rgba(200,160,255,0.18);letter-spacing:5px;pointer-events:none;white-space:nowrap;}
+    .ldr-modal-icon{font-size:2.4rem;text-align:center;margin-bottom:10px;margin-top:6px;animation:moonBob 3s ease-in-out infinite;display:block;}
     @keyframes moonBob{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-6px) rotate(5deg)}}
-    .ldr-modal-title{
-      font-size:1.05rem;font-weight:800;text-align:center;margin-bottom:6px;
-      background:linear-gradient(90deg,#C4A0F8,#90C8F0);
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-    }
-    .ldr-modal-desc{
-      font-size:0.7rem;color:rgba(210,185,235,0.65);text-align:center;
-      line-height:1.8;margin-bottom:6px;
-    }
-    .ldr-modal-info-box{
-      background:rgba(155,111,212,0.1);
-      border:1px solid rgba(155,111,212,0.2);
-      border-radius:11px;padding:10px 13px;margin-bottom:18px;
-      font-family:var(--mono);font-size:0.58rem;color:rgba(200,175,240,0.75);
-      line-height:1.8;
-    }
+    .ldr-modal-title{font-size:1.05rem;font-weight:800;text-align:center;margin-bottom:6px;background:linear-gradient(90deg,#C4A0F8,#90C8F0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .ldr-modal-desc{font-size:0.7rem;color:rgba(210,185,235,0.65);text-align:center;line-height:1.8;margin-bottom:6px;}
+    .ldr-modal-info-box{background:rgba(155,111,212,0.1);border:1px solid rgba(155,111,212,0.2);border-radius:11px;padding:10px 13px;margin-bottom:18px;font-family:var(--mono);font-size:0.58rem;color:rgba(200,175,240,0.75);line-height:1.8;}
     .ldr-modal-info-box span{color:rgba(200,160,255,0.95);font-weight:600;}
-    /* Countdown bar */
-    .ldr-modal-countdown{
-      height:3px;background:rgba(155,111,212,0.15);border-radius:3px;
-      margin-bottom:16px;overflow:hidden;
-    }
-    .ldr-modal-countdown-bar{
-      height:100%;background:linear-gradient(90deg,#9B6FD4,#4A9EE8);
-      border-radius:3px;width:100%;
-      transition:width linear;
-    }
-    /* Buttons — dark theme override */
-    .ldr-modal-btn-reject{
-      padding:12px;border-radius:12px;
-      background:rgba(255,255,255,0.05);
-      border:1px solid rgba(255,255,255,0.1);
-      color:rgba(210,185,235,0.65);
-      font-family:var(--font);font-size:0.83rem;font-weight:700;
-      cursor:pointer;transition:all 0.18s;
-    }
+    .ldr-modal-countdown{height:3px;background:rgba(155,111,212,0.15);border-radius:3px;margin-bottom:16px;overflow:hidden;}
+    .ldr-modal-countdown-bar{height:100%;background:linear-gradient(90deg,#9B6FD4,#4A9EE8);border-radius:3px;width:100%;transition:width linear;}
+    .ldr-modal-btn-reject{padding:12px;border-radius:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:rgba(210,185,235,0.65);font-family:var(--font);font-size:0.83rem;font-weight:700;cursor:pointer;transition:all 0.18s;}
     .ldr-modal-btn-reject:hover{background:rgba(255,255,255,0.09);color:rgba(210,185,235,0.9);}
-    .ldr-modal-btn-confirm{
-      padding:12px;border-radius:12px;
-      background:linear-gradient(135deg,rgba(155,111,212,0.9),rgba(74,158,232,0.85));
-      border:1px solid rgba(155,111,212,0.4);
-      color:#fff;
-      font-family:var(--font);font-size:0.83rem;font-weight:800;
-      cursor:pointer;transition:all 0.18s;
-      box-shadow:0 4px 18px rgba(155,111,212,0.35);
-    }
+    .ldr-modal-btn-confirm{padding:12px;border-radius:12px;background:linear-gradient(135deg,rgba(155,111,212,0.9),rgba(74,158,232,0.85));border:1px solid rgba(155,111,212,0.4);color:#fff;font-family:var(--font);font-size:0.83rem;font-weight:800;cursor:pointer;transition:all 0.18s;box-shadow:0 4px 18px rgba(155,111,212,0.35);}
     .ldr-modal-btn-confirm:hover{box-shadow:0 6px 24px rgba(155,111,212,0.55);transform:translateY(-1px);}
-    /* Relay preview pills */
-    .ldr-modal-relay-preview{
-      display:flex;gap:5px;justify-content:center;margin-bottom:14px;
-    }
-    .relay-preview-pill{
-      font-family:var(--mono);font-size:0.44rem;padding:4px 9px;border-radius:7px;
-      background:rgba(155,111,212,0.15);border:1px solid rgba(155,111,212,0.25);
-      color:rgba(190,155,245,0.8);
-      animation:pillGlow 1.8s ease-in-out infinite;
-    }
-    .relay-preview-pill:nth-child(2){animation-delay:.2s}
-    .relay-preview-pill:nth-child(3){animation-delay:.4s}
-    .relay-preview-pill:nth-child(4){animation-delay:.6s}
+    .ldr-modal-relay-preview{display:flex;gap:5px;justify-content:center;margin-bottom:14px;}
+    .relay-preview-pill{font-family:var(--mono);font-size:0.44rem;padding:4px 9px;border-radius:7px;background:rgba(155,111,212,0.15);border:1px solid rgba(155,111,212,0.25);color:rgba(190,155,245,0.8);animation:pillGlow 1.8s ease-in-out infinite;}
+    .relay-preview-pill:nth-child(2){animation-delay:.2s}.relay-preview-pill:nth-child(3){animation-delay:.4s}.relay-preview-pill:nth-child(4){animation-delay:.6s}
     @keyframes pillGlow{0%,100%{opacity:0.6;background:rgba(155,111,212,0.12)}50%{opacity:1;background:rgba(155,111,212,0.22)}}
 
-    /* ===== ALERT ===== */
-    .alert-box{position:fixed;bottom:20px;right:14px;left:14px;max-width:400px;margin:0 auto;padding:11px 16px;border-radius:13px;font-weight:700;font-size:0.78rem;z-index:9990;animation:slideUp 0.3s ease;font-family:var(--font)}
-    .alert-green{background:var(--sage);color:#fff}.alert-yellow{background:var(--peach);color:#fff}.alert-red{background:var(--rose);color:#fff}
+    /* ===== FIX 1: ALERT DI ATAS ===== */
+    .alert-stack{
+      position:fixed;
+      top:64px;   /* tepat di bawah topbar */
+      right:14px;left:14px;
+      max-width:400px;margin:0 auto;
+      z-index:9990;
+      display:flex;flex-direction:column;gap:6px;
+      pointer-events:none;
+    }
+    .alert-box{padding:11px 16px;border-radius:13px;font-weight:700;font-size:0.78rem;animation:slideDown 0.3s cubic-bezier(.22,1,.36,1);font-family:var(--font);pointer-events:auto;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,0.18);}
+    .alert-green{background:var(--sage);color:#fff}
+    .alert-yellow{background:var(--peach);color:#fff}
+    .alert-red{background:var(--rose);color:#fff}
     .alert-purple{background:linear-gradient(135deg,#9B6FD4,#4A9EE8);color:#fff}
-    @keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+    .alert-box.fade-out{animation:fadeOut 0.25s ease forwards}
+    @keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fadeOut{to{opacity:0;transform:translateY(-6px)}}
+    @media(min-width:860px){.alert-stack{top:68px;}}
 
     /* ===== DESKTOP ===== */
     @media(min-width:860px){
       .topbar{padding:0 30px;height:58px}
       .page{max-width:1180px;padding:20px 26px 60px;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
-      .hero{grid-column:1;grid-row:1}
-      .status-row{grid-column:1;grid-row:2}
-      .led-card{grid-column:1;grid-row:3}
-      .relay-card{grid-column:1;grid-row:4}
-      .stats-strip{grid-column:1;grid-row:5}
-      .chart-wrap{grid-column:2;grid-row:1}
-      .log-wrap{grid-column:2;grid-row:2/4}
-      .tbl-wrap-outer{grid-column:2;grid-row:4/6}
+      .hero{grid-column:1;grid-row:1}.status-row{grid-column:1;grid-row:2}.led-card{grid-column:1;grid-row:3}.relay-card{grid-column:1;grid-row:4}.stats-strip{grid-column:1;grid-row:5}
+      .chart-wrap{grid-column:2;grid-row:1}.log-wrap{grid-column:2;grid-row:2/4}.tbl-wrap-outer{grid-column:2;grid-row:4/6}
       .hsb-val{font-size:3.4rem}.hero-sensors{padding:16px 20px 18px;}
       #log{height:200px}.tbl-inner{max-height:300px}.chart-container{height:160px}
       canvas#sensorChart{height:160px!important}
@@ -410,6 +356,9 @@
   </style>
 </head>
 <body>
+
+<!-- FIX 1: Alert stack di atas -->
+<div class="alert-stack" id="alert-stack"></div>
 
 <!-- SPLASH -->
 <div id="splash">
@@ -431,11 +380,12 @@
     <div class="sp-sub"><span>Suhu</span> · <span>Kelembaban</span> · <span>Pencahayaan</span><br/>via ESP32 &amp; HiveMQ Cloud</div>
     <div class="sp-group">✦ KELOMPOK 6 ✦</div>
     <div class="sp-divider"><div class="sp-divider-dot"></div><div class="sp-divider-dot"></div><div class="sp-divider-dot"></div></div>
-    <button class="sp-btn" onclick="enterDashboard()">Buka Dashboard &nbsp;→</button>
+    <button class="sp-btn" id="sp-enter-btn">Buka Dashboard &nbsp;→</button>
     <div class="sp-tags">
       <span class="sp-tag">ESP32</span><span class="sp-tag">MQTT</span>
       <span class="sp-tag">DHT11</span><span class="sp-tag">LDR</span>
     </div>
+    <div id="splash-status"></div>
   </div>
 </div>
 
@@ -446,8 +396,8 @@
     <div class="modal-title" id="del-modal-title">Hapus Data?</div>
     <div class="modal-desc" id="del-modal-desc">Data yang dipilih akan dihapus permanen.</div>
     <div class="modal-actions">
-      <button class="modal-cancel" onclick="closeDelModal()">Batal</button>
-      <button class="modal-confirm" onclick="confirmDelete()">Hapus</button>
+      <button class="modal-cancel" id="del-cancel-btn">Batal</button>
+      <button class="modal-confirm" id="del-confirm-btn">Hapus</button>
     </div>
   </div>
 </div>
@@ -460,15 +410,13 @@
     <div class="csv-info" id="csv-info">Mempersiapkan data...</div>
     <div class="modal-desc" style="margin-bottom:14px" id="csv-note">File akan diunduh ke perangkat Anda.</div>
     <div class="modal-actions">
-      <button class="modal-cancel" onclick="closeCsvModal()">Batal</button>
-      <button class="modal-confirm" id="csv-confirm-btn" onclick="doExportCSV()" style="background:var(--sage-lt);border-color:var(--sage-md);color:var(--sage)">Download</button>
+      <button class="modal-cancel" id="csv-cancel-btn">Batal</button>
+      <button class="modal-confirm" id="csv-confirm-btn" style="background:var(--sage-lt);border-color:var(--sage-md);color:var(--sage)">Download</button>
     </div>
   </div>
 </div>
 
-<!-- =====================================================
-     MODAL LDR GELAP — Konfirmasi Nyalakan Semua Relay
-     ===================================================== -->
+<!-- MODAL LDR GELAP -->
 <div class="modal-overlay" id="ldr-dark-modal">
   <div class="modal-box">
     <span class="ldr-modal-icon">🌙</span>
@@ -484,11 +432,9 @@
       <span>💡 LDR:</span> <span style="color:#C4A0F8">GELAP</span> &nbsp;·&nbsp;
       <span>⚙️ Mode:</span> <span style="color:#A8E6D0">AUTO</span>
     </div>
-    <!-- Countdown bar (10 detik, setelah itu ditutup otomatis / tolak) -->
     <div class="ldr-modal-countdown">
       <div class="ldr-modal-countdown-bar" id="ldr-countdown-bar"></div>
     </div>
-    <!-- Relay pills preview -->
     <div class="ldr-modal-relay-preview">
       <div class="relay-preview-pill">Relay 1 → ON</div>
       <div class="relay-preview-pill">Relay 2 → ON</div>
@@ -496,8 +442,8 @@
       <div class="relay-preview-pill">Relay 4 → ON</div>
     </div>
     <div class="modal-actions">
-      <button class="ldr-modal-btn-reject" onclick="rejectLdrDark()">Tidak, Lanjutkan Auto</button>
-      <button class="ldr-modal-btn-confirm" onclick="confirmLdrDark()">✓ Ya, Nyalakan Semua</button>
+      <button class="ldr-modal-btn-reject" id="ldr-reject-btn">Tidak, Lanjutkan Auto</button>
+      <button class="ldr-modal-btn-confirm" id="ldr-confirm-btn">✓ Ya, Nyalakan Semua</button>
     </div>
   </div>
 </div>
@@ -517,7 +463,7 @@
       </div>
     </div>
     <div class="tb-r">
-      <button class="back-btn" onclick="backToSplash()">⬅ Beranda</button>
+      <button class="back-btn" id="back-btn">⬅ Beranda</button>
       <div id="badge"><div id="dot"></div><span id="btext">OFF</span></div>
     </div>
   </header>
@@ -526,9 +472,7 @@
 
     <!-- HERO -->
     <div class="hero">
-      <div class="hero-orbs">
-        <div class="ho1"></div><div class="ho2"></div><div class="ho3"></div>
-      </div>
+      <div class="hero-orbs"><div class="ho1"></div><div class="ho2"></div><div class="ho3"></div></div>
       <div class="hero-topbar">
         <div class="hero-eyebrow">Sensor Realtime</div>
         <div class="hero-live-badge">
@@ -538,25 +482,13 @@
       </div>
       <div class="hero-sensors">
         <div class="hero-sensor-block">
-          <div class="hsb-top">
-            <div class="hsb-icon hsb-icon-suhu">🌡️</div>
-            <div class="hsb-label">Suhu</div>
-          </div>
-          <div class="hsb-val-row">
-            <span class="hsb-val" id="sv">--</span>
-            <span class="hsb-unit">°C</span>
-          </div>
+          <div class="hsb-top"><div class="hsb-icon hsb-icon-suhu">🌡️</div><div class="hsb-label">Suhu</div></div>
+          <div class="hsb-val-row"><span class="hsb-val" id="sv">--</span><span class="hsb-unit">°C</span></div>
           <div class="hsb-bar"><div class="hsb-fill-suhu" id="sb"></div></div>
         </div>
         <div class="hero-sensor-block">
-          <div class="hsb-top">
-            <div class="hsb-icon hsb-icon-hum">💧</div>
-            <div class="hsb-label">Kelembapan</div>
-          </div>
-          <div class="hsb-val-row">
-            <span class="hsb-val" id="hv">--</span>
-            <span class="hsb-unit">%</span>
-          </div>
+          <div class="hsb-top"><div class="hsb-icon hsb-icon-hum">💧</div><div class="hsb-label">Kelembapan</div></div>
+          <div class="hsb-val-row"><span class="hsb-val" id="hv">--</span><span class="hsb-unit">%</span></div>
           <div class="hsb-bar"><div class="hsb-fill-hum" id="hb"></div></div>
         </div>
       </div>
@@ -622,10 +554,7 @@
         <div class="led-ind" id="lind3"><div class="ind-orb" id="indorb3"></div><div class="ind-name">LED 3</div><div class="ind-state" id="indstate3">OFF</div><div class="ind-badge" id="indbadge3">&gt;30°C</div></div>
         <div class="led-ind" id="lind4"><div class="ind-orb" id="indorb4"></div><div class="ind-name">LED 4</div><div class="ind-state" id="indstate4">OFF</div><div class="ind-badge" id="indbadge4">Sistem</div></div>
       </div>
-      <div class="led-source-note">
-        <span>📡</span>
-        <span id="led-source-txt">Indikator LED mencerminkan state aktual dari ESP32 secara realtime.</span>
-      </div>
+      <div class="led-source-note"><span>📡</span><span id="led-source-txt">Indikator LED mencerminkan state aktual dari ESP32 secara realtime.</span></div>
     </div>
 
     <!-- RELAY CONTROL -->
@@ -636,24 +565,17 @@
       </div>
       <div class="relay-subtitle">Kirim perintah ke ESP32 via MQTT · Hanya aktif di mode MANUAL</div>
       <div class="relay-grid">
-        <button class="relay-btn disabled-btn" id="rbtn1" onclick="toggleRelay(1)">
-          <div class="r-cmd-icon">🟢</div><div class="r-name">Relay 1</div><div class="r-cmd-label" id="rcmd1">Kirim Toggle</div>
-        </button>
-        <button class="relay-btn disabled-btn" id="rbtn2" onclick="toggleRelay(2)">
-          <div class="r-cmd-icon">🟡</div><div class="r-name">Relay 2</div><div class="r-cmd-label" id="rcmd2">Kirim Toggle</div>
-        </button>
-        <button class="relay-btn disabled-btn" id="rbtn3" onclick="toggleRelay(3)">
-          <div class="r-cmd-icon">🔴</div><div class="r-name">Relay 3</div><div class="r-cmd-label" id="rcmd3">Kirim Toggle</div>
-        </button>
-        <button class="relay-btn disabled-btn" id="rbtn4" onclick="toggleRelay(4)">
-          <div class="r-cmd-icon">🔵</div><div class="r-name">Relay 4</div><div class="r-cmd-label" id="rcmd4">Kirim Toggle</div>
-        </button>
+        <button class="relay-btn disabled-btn" id="rbtn1"><div class="r-cmd-icon">🟢</div><div class="r-name">Relay 1</div><div class="r-cmd-label" id="rcmd1">Kirim Toggle</div></button>
+        <button class="relay-btn disabled-btn" id="rbtn2"><div class="r-cmd-icon">🟡</div><div class="r-name">Relay 2</div><div class="r-cmd-label" id="rcmd2">Kirim Toggle</div></button>
+        <button class="relay-btn disabled-btn" id="rbtn3"><div class="r-cmd-icon">🔴</div><div class="r-name">Relay 3</div><div class="r-cmd-label" id="rcmd3">Kirim Toggle</div></button>
+        <button class="relay-btn disabled-btn" id="rbtn4"><div class="r-cmd-icon">🔵</div><div class="r-name">Relay 4</div><div class="r-cmd-label" id="rcmd4">Kirim Toggle</div></button>
       </div>
-      <button class="relay-alloff-btn disabled-btn" id="relay-alloff" onclick="allRelayOff()">⏹ Matikan Semua Relay</button>
-      <div class="relay-note">
-        <span style="font-size:11px;flex-shrink:0;margin-top:1px">ℹ️</span>
-        <span id="relay-note-txt">Kontrol relay hanya aktif saat ESP32 dalam <b>Mode MANUAL</b>. Ganti mode dengan tombol Reset (GPIO 27) di ESP32.</span>
+      <!-- FIX 5: Tombol Nyalakan Semua & Matikan Semua -->
+      <div class="relay-bulk-row">
+        <button class="relay-allon-btn disabled-btn" id="relay-allon">▶ Nyalakan Semua</button>
+        <button class="relay-alloff-btn disabled-btn" id="relay-alloff">⏹ Matikan Semua</button>
       </div>
+      <div class="relay-note"><span style="font-size:11px;flex-shrink:0;margin-top:1px">ℹ️</span><span id="relay-note-txt">Kontrol relay hanya aktif saat ESP32 dalam <b>Mode MANUAL</b>. Ganti mode dengan tombol Reset (GPIO 27) di ESP32.</span></div>
     </div>
 
     <!-- STATS -->
@@ -669,7 +591,7 @@
       <div id="log">
         <div class="le"><span class="lt">--:--:--</span><span class="lm muted">Tekan Connect untuk mulai.</span></div>
       </div>
-      <button id="btn" onclick="toggle()">Hubungkan ke MQTT</button>
+      <button id="btn">Hubungkan ke MQTT</button>
     </div>
 
     <!-- TABLE -->
@@ -679,8 +601,8 @@
         <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
           <span class="sel-info" id="sel-info"></span>
           <div class="tbl-actions">
-            <button class="tbtn tbtn-del" id="del-btn" onclick="deleteSelected()" disabled>🗑 Hapus</button>
-            <button class="tbtn tbtn-csv" onclick="exportCSV()">📥 CSV</button>
+            <button class="tbtn tbtn-del" id="del-btn" disabled>🗑 Hapus</button>
+            <button class="tbtn tbtn-csv" id="csv-btn">📥 CSV</button>
           </div>
         </div>
       </div>
@@ -688,12 +610,15 @@
         <table>
           <thead>
             <tr>
-              <th class="cb-col"><input type="checkbox" id="chk-all" onchange="toggleAll(this)"/></th>
-              <th>#</th><th>Waktu</th><th>°C</th><th>%RH</th><th>Cahaya</th><th>Mode</th><th>LED</th>
+              <th class="cb-col"><input type="checkbox" id="chk-all"/></th>
+              <th>#</th><th>Waktu</th><th>°C</th><th>%RH</th>
+              <!-- FIX 3: Kolom Status Suhu -->
+              <th>Status</th>
+              <th>Cahaya</th><th>Mode</th><th>LED/Aksi</th>
             </tr>
           </thead>
           <tbody id="tbl-body">
-            <tr><td colspan="8" class="no-data">Belum ada data.</td></tr>
+            <tr><td colspan="9" class="no-data">Belum ada data.</td></tr>
           </tbody>
         </table>
       </div>
@@ -703,20 +628,53 @@
 </div><!-- #app -->
 
 <script>
+/* =====================================================
+   PERBAIKAN:
+   1. Alert muncul di ATAS (bawah topbar), bukan di bawah layar
+   2. Semua aktivitas relay dicatat ke riwayat (toggle, allOn, allOff, LDR dark)
+   3. Kolom Status Suhu di tabel
+   4. CSV fix untuk Android WebView (JavascriptInterface bridge + fallback base64)
+   5. Tombol Nyalakan Semua & Matikan Semua Relay di mode MANUAL
+   ===================================================== */
+
+/* ===== LIBRARY LOADER ===== */
+let pahoReady=false,pahoError=false;
+function loadPaho(cb){
+  if(window.Paho){pahoReady=true;cb(true);return;}
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.1.0/paho-mqtt.min.js';
+  s.onload=function(){pahoReady=true;cb(true);};
+  s.onerror=function(){pahoError=true;cb(false);};
+  document.head.appendChild(s);
+}
+
 /* ===== SPLASH & NAV ===== */
 function enterDashboard(){
-  document.getElementById('splash').classList.add('hide');
-  const app=document.getElementById('app');
-  app.style.display='block';app.style.opacity='0';
-  setTimeout(()=>{app.style.transition='opacity 0.4s';app.style.opacity='1';},20);
-  setTimeout(()=>document.getElementById('splash').style.display='none',600);
+  const splash=document.getElementById('splash'),app=document.getElementById('app');
+  splash.classList.add('hide');app.style.display='block';app.style.opacity='0';
+  setTimeout(function(){app.style.transition='opacity 0.4s';app.style.opacity='1';},20);
+  setTimeout(function(){splash.style.display='none';},600);
 }
 function backToSplash(){
   const app=document.getElementById('app'),splash=document.getElementById('splash');
   app.style.transition='opacity 0.3s';app.style.opacity='0';
   splash.style.display='flex';splash.classList.remove('hide');
-  setTimeout(()=>{app.style.display='none';app.style.opacity='1';},380);
+  setTimeout(function(){app.style.display='none';app.style.opacity='1';},380);
 }
+
+(function(){
+  var btn=document.getElementById('sp-enter-btn');
+  if(!btn)return;
+  // Langsung bisa masuk dashboard — tidak tunggu Paho
+  btn.addEventListener('click',function(){enterDashboard();});
+  // Load Paho diam-diam di background
+  loadPaho(function(ok){
+    if(!ok){
+      var statusEl=document.getElementById('splash-status');
+      if(statusEl){statusEl.textContent='⚠ Gagal memuat library MQTT';statusEl.className='err';}
+    }
+  });
+})();
 
 /* ===== CONFIG ===== */
 const BROKER='cda01f055ad244f08168d0a5b265ab32.s1.eu.hivemq.cloud';
@@ -734,17 +692,9 @@ const tableInterval=3000;
 let relayState=[false,false,false,false];
 let currentMode='idle';
 let lastUpdateTimestamp=null;
-
-/* =====================================================
-   LDR GELAP STATE
-   - ldrDarkAsked: sudah pernah tanya di sesi gelap ini?
-                   reset saat cahaya kembali TERANG atau
-                   mode berubah dari AUTO
-   - ldrDarkCountdownTimer: ID interval untuk countdown bar
-   ===================================================== */
 let ldrDarkAsked=false;
 let ldrDarkCountdownTimer=null;
-const LDR_DARK_TIMEOUT_MS=15000; // 15 detik sebelum modal tutup otomatis
+const LDR_DARK_TIMEOUT_MS=15000;
 
 /* ===== UPDATE AGO ===== */
 function updateAgoLabel(){
@@ -777,186 +727,139 @@ function confirmDelete(){
   document.getElementById('del-btn').disabled=true;
   showAlert(`🗑 ${ids.size} data dihapus`,'red');
 }
-document.getElementById('del-modal').addEventListener('click',function(e){if(e.target===this)closeDelModal();});
 
-/* ===== MODAL: CSV ===== */
+/* ===== FIX 4: CSV EXPORT — Android WebView safe ===== */
 function exportCSV(){
   if(history.length===0){showAlert('Tidak ada data untuk diexport.','yellow');return;}
   const fn=`iot-k6-${new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')}.csv`;
-  document.getElementById('csv-info').innerHTML=`<b>File:</b> ${fn}<br><b>Baris:</b> ${history.length} data<br><b>Kolom:</b> #, Waktu, Suhu, Hum, Cahaya, Mode, LED`;
+  document.getElementById('csv-info').innerHTML=`<b>File:</b> ${fn}<br><b>Baris:</b> ${history.length} data<br><b>Kolom:</b> #, Waktu, Suhu, Hum, Status, Cahaya, Mode, LED`;
   const isMobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-  document.getElementById('csv-note').textContent=isMobile
-    ?'File CSV akan tersimpan di folder Downloads perangkat Anda.'
-    :'File CSV langsung diunduh ke komputer Anda.';
+  document.getElementById('csv-note').textContent=isMobile?'File CSV akan tersimpan di folder Downloads perangkat Anda.':'File CSV langsung diunduh ke komputer Anda.';
   document.getElementById('csv-modal').classList.add('show');
 }
 function closeCsvModal(){document.getElementById('csv-modal').classList.remove('show');}
-document.getElementById('csv-modal').addEventListener('click',function(e){if(e.target===this)closeCsvModal();});
+
+function buildCSVContent(){
+  const BOM='\uFEFF';
+  const h=['#','Waktu','Suhu(C)','Hum(%)','Status','Cahaya','Mode','LED'];
+  const rows=history.map(r=>[r.id,r.ts,r.suhu,r.hum,r.statusSuhu||'-',r.cahaya,r.mode||'-',r.led]);
+  return BOM+[h,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+}
 
 function doExportCSV(){
   closeCsvModal();
   if(history.length===0)return;
-  const BOM='\uFEFF';
-  const h=['#','Waktu','Suhu(C)','Hum(%)','Cahaya','Mode','LED'];
-  const rows=history.map(r=>[r.id,r.ts,r.suhu,r.hum,r.cahaya,r.mode||'-',r.led]);
-  const csv=BOM+[h,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const csv=buildCSVContent();
   const fn=`iot-k6-${new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')}.csv`;
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
-  if(typeof navigator.share==='function'&&typeof navigator.canShare==='function'){
-    try{
-      const file=new File([blob],fn,{type:'text/csv'});
-      if(navigator.canShare&&navigator.canShare({files:[file]})){
-        navigator.share({files:[file],title:'Data IoT K6',text:'Export data sensor IoT Kelompok 6'})
-          .then(()=>showAlert('✅ File CSV berhasil dibagikan!','green'))
-          .catch(e=>{if(e.name!=='AbortError')csvDownloadDirect(blob,fn,csv);});
-        return;
-      }
-    }catch(e){}
+
+  // 1. Android WebView JavascriptInterface bridge
+  if(window.Android&&typeof window.Android.downloadCSV==='function'){
+    try{window.Android.downloadCSV(csv,fn);showAlert('✅ CSV dikirim ke Android!','green');return;}catch(e){}
   }
-  csvDownloadDirect(blob,fn,csv);
-}
-function csvDownloadDirect(blob,fn,csvText){
+
+  // 2. data: URI base64 — paling kompatibel di WebView Android
   try{
+    const b64=btoa(unescape(encodeURIComponent(csv)));
+    const dataUri='data:text/csv;base64,'+b64;
+    const a=document.createElement('a');a.href=dataUri;a.download=fn;
+    a.style.cssText='position:fixed;left:-9999px;top:-9999px;opacity:0;';
+    document.body.appendChild(a);
+    requestAnimationFrame(function(){
+      a.click();
+      setTimeout(function(){try{document.body.removeChild(a);}catch(e){}},3000);
+    });
+    showAlert('✅ CSV diunduh ke Downloads!','green');return;
+  }catch(e){}
+
+  // 3. Blob URL (Chrome, Firefox desktop)
+  try{
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');a.href=url;a.download=fn;
     a.style.cssText='position:fixed;left:-9999px;top:-9999px;opacity:0;';
-    document.body.appendChild(a);
-    requestAnimationFrame(()=>{a.click();setTimeout(()=>{try{document.body.removeChild(a);}catch(e){}URL.revokeObjectURL(url);},3000);});
-    showAlert('✅ CSV diunduh ke folder Downloads!','green');return;
-  }catch(e){}
-  try{
-    const encoded='data:text/csv;charset=utf-8,'+encodeURIComponent(csvText);
-    const a=document.createElement('a');a.href=encoded;a.download=fn;
-    a.style.cssText='position:fixed;left:-9999px;top:-9999px;';
     document.body.appendChild(a);a.click();
-    setTimeout(()=>{try{document.body.removeChild(a);}catch(e){}},2000);
-    showAlert('✅ CSV sedang diunduh...','green');return;
+    setTimeout(function(){try{document.body.removeChild(a);}catch(e){}URL.revokeObjectURL(url);},3000);
+    showAlert('✅ CSV diunduh!','green');return;
   }catch(e){}
+
+  // 4. Web Share API (iOS Safari, Android Chrome)
+  if(typeof navigator.share==='function'){
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    const file=new File([blob],fn,{type:'text/csv'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:'Data IoT K6'})
+        .then(function(){showAlert('✅ Berhasil dibagikan!','green');})
+        .catch(function(){showAlert('⚠ Dibatalkan','yellow');});
+      return;
+    }
+  }
+
+  // 5. Fallback: tampilkan raw CSV di tab baru
   try{
     const w=window.open();
     if(w){
-      w.document.write('<html><head><meta name="viewport" content="width=device-width"><title>'+fn+'</title></head><body><pre style="font-size:12px;white-space:pre-wrap;word-break:break-all">'+csvText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</pre></body></html>');
-      w.document.title=fn;w.document.close();
-      showAlert('📂 Tekan ikon bagikan → "Simpan ke File" untuk menyimpan','yellow');
-    }else{showAlert('⚠ Popup diblokir. Izinkan popup lalu coba lagi.','red');}
-  }catch(e){showAlert('⚠ Gagal export. Coba Chrome atau Firefox.','red');}
+      w.document.write('<html><head><title>'+fn+'</title></head><body><pre style="font-size:11px;word-break:break-all">'+csv.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</pre></body></html>');
+      w.document.close();showAlert('📂 Salin teks CSV dari tab baru','yellow');
+    }else{showAlert('⚠ Popup diblokir. Coba lagi.','red');}
+  }catch(e){showAlert('⚠ Gagal download CSV','red');}
 }
 
-/* =====================================================
-   MODAL LDR GELAP — logic
-   ===================================================== */
-
-/**
- * Tampilkan modal konfirmasi LDR gelap.
- * Dipanggil dari onMsg() saat mode=auto dan cahaya=GELAP
- * dan belum pernah tanya di sesi gelap ini (ldrDarkAsked=false).
- */
-function showLdrDarkModal(suhu, hum){
-  // Isi info suhu/hum
-  document.getElementById('ldr-modal-suhu').textContent = suhu!==null ? suhu.toFixed(1) : '—';
-  document.getElementById('ldr-modal-hum').textContent  = hum!==null  ? hum.toFixed(1)  : '—';
-
-  // Tampilkan overlay
+/* ===== MODAL LDR GELAP ===== */
+function showLdrDarkModal(suhu,hum){
+  document.getElementById('ldr-modal-suhu').textContent=suhu!==null?suhu.toFixed(1):'—';
+  document.getElementById('ldr-modal-hum').textContent=hum!==null?hum.toFixed(1):'—';
   document.getElementById('ldr-dark-modal').classList.add('show');
-
-  // Mulai countdown bar animasi
-  const bar = document.getElementById('ldr-countdown-bar');
-  bar.style.transition = 'none';
-  bar.style.width = '100%';
-  // Paksa reflow sebelum set transisi
+  const bar=document.getElementById('ldr-countdown-bar');
+  bar.style.transition='none';bar.style.width='100%';
   bar.getBoundingClientRect();
-  bar.style.transition = `width ${LDR_DARK_TIMEOUT_MS}ms linear`;
-  bar.style.width = '0%';
-
-  // Auto-tutup setelah timeout → anggap tolak
-  if(ldrDarkCountdownTimer) clearTimeout(ldrDarkCountdownTimer);
-  ldrDarkCountdownTimer = setTimeout(()=>{
-    rejectLdrDark(true); // true = timeout, bukan klik user
-  }, LDR_DARK_TIMEOUT_MS);
-
-  addLog('LDR', 'GELAP terdeteksi di mode AUTO — menunggu konfirmasi user');
+  bar.style.transition=`width ${LDR_DARK_TIMEOUT_MS}ms linear`;bar.style.width='0%';
+  if(ldrDarkCountdownTimer)clearTimeout(ldrDarkCountdownTimer);
+  ldrDarkCountdownTimer=setTimeout(function(){rejectLdrDark(true);},LDR_DARK_TIMEOUT_MS);
+  addLog('LDR','GELAP terdeteksi di mode AUTO — menunggu konfirmasi user');
 }
-
-/**
- * User menekan "Ya, Nyalakan Semua"
- */
 function confirmLdrDark(){
   _closeLdrDarkModal();
-  if(!conn){
-    showAlert('⚠ Tidak terhubung ke MQTT','yellow');
-    return;
-  }
-  // Kirim semua relay ON
+  if(!conn){showAlert('⚠ Tidak terhubung ke MQTT','yellow');return;}
   sendAllRelayOn();
   showAlert('🌙 Gelap terdeteksi — semua relay dinyalakan!','purple');
   addLog('LDR','User setuju → kirim semua relay ON');
+  // FIX 2: catat ke riwayat
+  var ls=_getLastSensor();
+  addTableRow(new Date(),ls.suhu,ls.hum,ls.cahaya,null,ls.mode||'auto','LDR GELAP → ALL ON');
 }
-
-/**
- * User menekan "Tidak" atau timeout
- * @param {boolean} isTimeout - true jika dipicu timeout, bukan klik
- */
-function rejectLdrDark(isTimeout=false){
+function rejectLdrDark(isTimeout){
   _closeLdrDarkModal();
-  if(isTimeout){
-    showAlert('🌙 Timeout — mode AUTO tetap berjalan normal','yellow');
-    addLog('LDR','Timeout konfirmasi → mode AUTO tetap normal');
-  }else{
-    showAlert('🌙 Mode AUTO tetap berjalan normal','yellow');
-    addLog('LDR','User menolak → mode AUTO tetap normal');
-  }
+  if(isTimeout){showAlert('🌙 Timeout — mode AUTO tetap berjalan normal','yellow');addLog('LDR','Timeout → AUTO tetap normal');}
+  else{showAlert('🌙 Mode AUTO tetap berjalan normal','yellow');addLog('LDR','User menolak → AUTO tetap normal');}
 }
-
-/** Internal: tutup modal dan bersihkan timer */
 function _closeLdrDarkModal(){
   document.getElementById('ldr-dark-modal').classList.remove('show');
   if(ldrDarkCountdownTimer){clearTimeout(ldrDarkCountdownTimer);ldrDarkCountdownTimer=null;}
-  // Stop bar animasi (set ke lebar saat ini supaya tidak lompat)
   const bar=document.getElementById('ldr-countdown-bar');
   bar.style.transition='none';
-  bar.style.width=bar.style.width; // freeze
 }
-
-/**
- * Kirim semua relay ON ke ESP32 via MQTT.
- * Gunakan format {"relay":N,"state":true} satu per satu
- * agar kompatibel dengan firmware onMqttMessage() yang sudah ada.
- */
 function sendAllRelayOn(){
-  if(!cl||!conn) return;
+  if(!cl||!conn)return;
   for(let i=1;i<=4;i++){
     const payload=JSON.stringify({relay:i,state:true});
-    try{
-      const msg=new Paho.Message(payload);
-      msg.destinationName=TOPIC_CMD;msg.qos=1;cl.send(msg);
-    }catch(e){addLog('ERR','Gagal kirim relay '+i+': '+e.message);}
+    try{const msg=new Paho.Message(payload);msg.destinationName=TOPIC_CMD;msg.qos=1;cl.send(msg);}
+    catch(e){addLog('ERR','Gagal kirim relay '+i+': '+e.message);}
   }
-  // Update state lokal
   relayState=[true,true,true,true];
-  renderLEDIndicators(relayState);
-  renderRelayButtons();
+  renderLEDIndicators(relayState);renderRelayButtons();
   addLog('CMD','ALL RELAY → ON (LDR GELAP)');
 }
-
-// Tutup modal jika klik di backdrop
-document.getElementById('ldr-dark-modal').addEventListener('click',function(e){
-  if(e.target===this) rejectLdrDark();
-});
 
 /* ===== CHART ===== */
 const MAX_CHART_PTS=30;
 let chartData={labels:[],suhu:[],hum:[]};
 let sensorChart=null;
-
 function loadChartFromStorage(){
   try{
     const raw=localStorage.getItem(CHART_KEY);if(!raw)return;
     const obj=JSON.parse(raw);
     chartData.labels=obj.labels||[];chartData.suhu=obj.suhu||[];chartData.hum=obj.hum||[];
-    if(chartData.labels.length>MAX_CHART_PTS){
-      const excess=chartData.labels.length-MAX_CHART_PTS;
-      chartData.labels=chartData.labels.slice(excess);chartData.suhu=chartData.suhu.slice(excess);chartData.hum=chartData.hum.slice(excess);
-    }
+    if(chartData.labels.length>MAX_CHART_PTS){const ex=chartData.labels.length-MAX_CHART_PTS;chartData.labels=chartData.labels.slice(ex);chartData.suhu=chartData.suhu.slice(ex);chartData.hum=chartData.hum.slice(ex);}
   }catch(e){}
 }
 function saveChartToStorage(){try{localStorage.setItem(CHART_KEY,JSON.stringify(chartData));}catch(e){}}
@@ -971,16 +874,8 @@ function initChart(){
       {label:'Kelembapan (%)',data:chartData.hum,borderColor:'#4A9EE8',backgroundColor:'rgba(74,158,232,0.06)',borderWidth:2,pointRadius:3,pointBackgroundColor:'#4A9EE8',pointBorderWidth:0,tension:0.4,fill:true}
     ]},
     options:{responsive:true,maintainAspectRatio:false,animation:{duration:400},interaction:{mode:'index',intersect:false},
-      plugins:{legend:{display:false},tooltip:{
-        backgroundColor:'#1E1028',titleColor:'rgba(220,190,240,0.7)',bodyColor:'#fff',
-        borderColor:'rgba(237,229,245,0.2)',borderWidth:1,padding:10,
-        titleFont:{family:"'JetBrains Mono',monospace",size:10},bodyFont:{family:"'JetBrains Mono',monospace",size:11},
-        displayColors:true,boxWidth:8,boxHeight:8,boxPadding:4,cornerRadius:10
-      }},
-      scales:{
-        x:{ticks:{color:lc,font:{family:"'JetBrains Mono',monospace",size:9},maxTicksLimit:8},grid:{color:gc,drawBorder:false},border:{color:gc}},
-        y:{ticks:{color:lc,font:{family:"'JetBrains Mono',monospace",size:9}},grid:{color:gc,drawBorder:false},border:{color:gc},min:0,max:100}
-      }
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#1E1028',titleColor:'rgba(220,190,240,0.7)',bodyColor:'#fff',borderColor:'rgba(237,229,245,0.2)',borderWidth:1,padding:10,titleFont:{family:"'JetBrains Mono',monospace",size:10},bodyFont:{family:"'JetBrains Mono',monospace",size:11},displayColors:true,boxWidth:8,boxHeight:8,boxPadding:4,cornerRadius:10}},
+      scales:{x:{ticks:{color:lc,font:{family:"'JetBrains Mono',monospace",size:9},maxTicksLimit:8},grid:{color:gc,drawBorder:false},border:{color:gc}},y:{ticks:{color:lc,font:{family:"'JetBrains Mono',monospace",size:9}},grid:{color:gc,drawBorder:false},border:{color:gc},min:0,max:100}}
     }
   });
 }
@@ -1015,57 +910,86 @@ function loadHistory(){
       if(d.suhu!==null&&d.suhu!==undefined)updSensor(d.suhu,d.hum);
       if(d.cahaya)updLDR(d.cahaya);
       if(d.mode){
-        currentMode=d.mode;
-        updModeBadge(d.mode,d.suhu);
+        currentMode=d.mode;updModeBadge(d.mode,d.suhu);
         if(d.mode==='manual')setSystemManual();
         else if(d.mode==='auto')setSystemOn(d.suhu||0);
       }
-      if(d.led){
-        const ls=parseLedField(d.led);
-        relayState=ls;
-        renderLEDIndicators(ls);
-        renderRelayButtons();
-      }
+      if(d.led){const ls=parseLedField(d.led);relayState=ls;renderLEDIndicators(ls);renderRelayButtons();}
     }
   }catch(e){}
+}
+
+/* ===== FIX 3: STATUS SUHU ===== */
+function suhuStatus(suhu){
+  if(suhu===null||suhu===undefined||suhu==='-'||suhu==='—')return{txt:'—',color:'var(--ink-3)'};
+  const v=parseFloat(suhu);
+  if(isNaN(v))return{txt:'—',color:'var(--ink-3)'};
+  if(v>=20&&v<=25)return{txt:'Normal',color:'var(--sage)'};
+  if(v<=30)return{txt:'Sedang',color:'var(--peach)'};
+  return{txt:'Panas',color:'var(--rose)'};
 }
 
 /* ===== TABLE ===== */
 function rebuildTable(){
   const tb=document.getElementById('tbl-body');tb.innerHTML='';
   if(history.length===0){
-    tb.innerHTML='<tr><td colspan="8" class="no-data">Belum ada data.</td></tr>';
+    tb.innerHTML='<tr><td colspan="9" class="no-data">Belum ada data.</td></tr>';
     document.getElementById('chk-all').checked=false;document.getElementById('del-btn').disabled=true;return;
   }
   history.forEach(r=>tb.appendChild(makeRow(r)));updateSelInfo();
 }
+
 function makeRow(r){
   const tr=document.createElement('tr');tr.dataset.id=r.id;
-  const badge=r.cahaya==='TERANG'?`<span class="bt">☀️ Terang</span>`:`<span class="bg2b">🌙 Gelap</span>`;
+  const cahayaBadge=r.cahaya==='TERANG'?`<span class="bt">☀️ Terang</span>`:r.cahaya==='GELAP'?`<span class="bg2b">🌙 Gelap</span>`:`<span style="color:var(--ink-3);font-size:0.51rem">—</span>`;
   const modeBadge=r.mode==='manual'
     ?`<span style="color:var(--peach);background:var(--peach-lt);border:1px solid var(--peach-md);border-radius:5px;font-size:0.51rem;padding:2px 7px;display:inline-block">🎛 Manual</span>`
     :r.mode==='auto'
     ?`<span style="color:var(--sage);background:var(--sage-lt);border:1px solid var(--sage-md);border-radius:5px;font-size:0.51rem;padding:2px 7px;display:inline-block">🤖 Auto</span>`
+    :r.mode==='relay'
+    ?`<span style="color:var(--mauv);background:var(--mauv-lt);border:1px solid var(--mauv-md);border-radius:5px;font-size:0.51rem;padding:2px 7px;display:inline-block">🔌 Relay</span>`
     :`<span style="color:var(--ink-3);font-size:0.51rem">—</span>`;
-  tr.innerHTML=`<td class="cb-col"><input type="checkbox" class="row-cb" data-id="${r.id}"></td><td>${r.id}</td><td>${r.ts}</td><td class="suhu-cell">${r.suhu}</td><td class="hum-cell">${r.hum}</td><td>${badge}</td><td>${modeBadge}</td><td>${r.led}</td>`;
+  // FIX 3: Status Suhu badge
+  const st=suhuStatus(r.suhu);
+  const statusBadge=(r.suhu&&r.suhu!=='-'&&r.suhu!=='—')
+    ?`<span style="color:${st.color};font-size:0.51rem;font-weight:700">${st.txt}</span>`
+    :`<span style="color:var(--ink-3);font-size:0.51rem">—</span>`;
+  // Kolom LED/Aksi — bisa berupa string aksi relay
+  const ledTxt=r.led||'-';
+  tr.innerHTML=`<td class="cb-col"><input type="checkbox" class="row-cb" data-id="${r.id}"></td><td>${r.id}</td><td>${r.ts}</td><td class="suhu-cell">${r.suhu}</td><td class="hum-cell">${r.hum}</td><td>${statusBadge}</td><td>${cahayaBadge}</td><td>${modeBadge}</td><td style="font-size:0.56rem;color:var(--ink-2)">${ledTxt}</td>`;
   const cb=tr.querySelector('.row-cb');
   cb.addEventListener('change',onRowCheck);
   cb.addEventListener('click',e=>e.stopPropagation());
   tr.addEventListener('click',function(){cb.checked=!cb.checked;onRowCheck();});
   return tr;
 }
-function addTableRow(now,suhu,hum,cahaya,ledStr,mode){
+
+function addTableRow(now,suhu,hum,cahaya,ledStr,mode,customLabel){
   const names=['LED1','LED2','LED3','LED4'];let aktif=[];
-  if(ledStr)ledStr.split('').forEach((v,i)=>{if(v==='1')aktif.push(names[i]);});
+  if(customLabel){
+    aktif=[customLabel];
+  }else if(ledStr){
+    if(/^[01]{4}$/.test(ledStr))ledStr.split('').forEach((v,i)=>{if(v==='1')aktif.push(names[i]);});
+    else aktif=[ledStr];
+  }
   const ts=now.toLocaleTimeString('id-ID',{hour12:false});
-  const row={id:nextId++,ts,suhu:suhu?suhu.toFixed(1):'-',hum:hum?hum.toFixed(1):'-',cahaya,mode:mode||'auto',led:aktif.length?aktif.join(','):'-'};
+  const suhuVal=suhu!==null&&suhu!==undefined?parseFloat(suhu).toFixed(1):'-';
+  const humVal=hum!==null&&hum!==undefined?parseFloat(hum).toFixed(1):'-';
+  const st=suhuStatus(suhuVal);
+  const row={
+    id:nextId++,ts,suhu:suhuVal,hum:humVal,
+    cahaya:cahaya||'—',mode:mode||'auto',
+    led:aktif.length?aktif.join(','):'-',
+    statusSuhu:st.txt   // FIX 3: simpan status suhu di row
+  };
   history.unshift(row);if(history.length>MAX_ROWS)history=history.slice(0,MAX_ROWS);
   const tb=document.getElementById('tbl-body');
-  const no=tb.querySelector('.no-data');if(no)no.parentElement.remove();
+  const noRow=tb.querySelector('tr td.no-data');if(noRow)noRow.closest('tr').remove();
   tb.insertBefore(makeRow(row),tb.firstChild);
   while(tb.children.length>MAX_ROWS)tb.removeChild(tb.lastChild);
   updateSelInfo();saveHistory();
 }
+
 function onRowCheck(){
   const cbs=[...document.querySelectorAll('#tbl-body .row-cb')];
   const checked=cbs.filter(c=>c.checked);
@@ -1076,7 +1000,7 @@ function onRowCheck(){
   });
   updateSelInfo();
 }
-function toggleAll(m){document.querySelectorAll('#tbl-body .row-cb').forEach(c=>c.checked=m.checked);onRowCheck();}
+function toggleAll(chk){document.querySelectorAll('#tbl-body .row-cb').forEach(c=>c.checked=chk.checked);onRowCheck();}
 function updateSelInfo(){
   const cbs=[...document.querySelectorAll('#tbl-body .row-cb')];const n=cbs.filter(c=>c.checked).length;
   document.getElementById('sel-info').textContent=history.length>0?(n>0?`${n} dipilih`:`${history.length} baris`):'';
@@ -1087,11 +1011,16 @@ function deleteSelected(){
   showDelModal(new Set(cbs.map(c=>+c.dataset.id)));
 }
 
+/* ===== _getLastSensor helper ===== */
+function _getLastSensor(){
+  try{const d=JSON.parse(localStorage.getItem('last_sensor')||'{}');return{suhu:d.suhu||null,hum:d.hum||null,cahaya:d.cahaya||'—',mode:d.mode||'auto'};}
+  catch(e){return{suhu:null,hum:null,cahaya:'—',mode:'auto'};}
+}
+
 /* ===== LED INDIKATOR ===== */
 const LED_IND_CLASSES=['ind-on-green','ind-on-yellow','ind-on-red','ind-on-blue'];
 const LED_ORB_CLASSES=['orb-green','orb-yellow','orb-red','orb-blue'];
 function renderLEDIndicators(state){
-  const mode=currentMode;
   for(let i=0;i<4;i++){
     const tile=document.getElementById('lind'+(i+1));
     const orb=document.getElementById('indorb'+(i+1));
@@ -1099,84 +1028,99 @@ function renderLEDIndicators(state){
     const badge=document.getElementById('indbadge'+(i+1));
     tile.className='led-ind';orb.className='ind-orb';badge.className='ind-badge';
     if(state[i]){
-      tile.classList.add(LED_IND_CLASSES[i]);
-      orb.classList.add(LED_ORB_CLASSES[i],'orb-on');
+      tile.classList.add(LED_IND_CLASSES[i]);orb.classList.add(LED_ORB_CLASSES[i],'orb-on');
       stateEl.textContent='ON';badge.classList.add('badge-on');badge.textContent='AKTIF';
     }else{
       stateEl.textContent='OFF';
-      const labels=['20–25°C','25–30°C','>30°C','Sistem'];
-      badge.textContent=labels[i];
+      const labels=['20–25°C','25–30°C','>30°C','Sistem'];badge.textContent=labels[i];
     }
   }
   const src=document.getElementById('led-source-txt');
   const modeBadge=document.getElementById('led-mode-badge');
-  if(mode==='auto'){
-    src.textContent='LED dikontrol otomatis oleh sensor suhu ESP32.';
-    modeBadge.textContent='🤖 Auto';modeBadge.style.color='var(--sage)';modeBadge.style.borderColor='var(--sage-md)';modeBadge.style.background='var(--sage-lt)';
-  }else if(mode==='manual'){
-    src.textContent='LED dikontrol manual via tombol fisik / perintah web.';
-    modeBadge.textContent='🎛 Manual';modeBadge.style.color='var(--peach)';modeBadge.style.borderColor='var(--peach-md)';modeBadge.style.background='var(--peach-lt)';
-  }else{
-    src.textContent='ESP32 idle — semua LED mati.';
-    modeBadge.textContent='💤 Idle';modeBadge.style.color='var(--ink-3)';modeBadge.style.borderColor='var(--card-border)';modeBadge.style.background='var(--bg)';
-  }
+  if(currentMode==='auto'){src.textContent='LED dikontrol otomatis oleh sensor suhu ESP32.';modeBadge.textContent='🤖 Auto';modeBadge.style.color='var(--sage)';modeBadge.style.borderColor='var(--sage-md)';modeBadge.style.background='var(--sage-lt)';}
+  else if(currentMode==='manual'){src.textContent='LED dikontrol manual via tombol fisik / perintah web.';modeBadge.textContent='🎛 Manual';modeBadge.style.color='var(--peach)';modeBadge.style.borderColor='var(--peach-md)';modeBadge.style.background='var(--peach-lt)';}
+  else{src.textContent='ESP32 idle — semua LED mati.';modeBadge.textContent='💤 Idle';modeBadge.style.color='var(--ink-3)';modeBadge.style.borderColor='var(--card-border)';modeBadge.style.background='var(--bg)';}
 }
 function resetLEDIndicators(){renderLEDIndicators([false,false,false,false]);}
 
-/* ===== RELAY CONTROL ===== */
+/* ===== FIX 5: RELAY CONTROL — Nyalakan Semua + Matikan Semua ===== */
 function renderRelayButtons(){
-  const isManual=(currentMode==='manual');
-  const canControl=isManual&&conn;
+  const isManual=(currentMode==='manual');const canControl=isManual&&conn;
   for(let i=0;i<4;i++){
-    const btn=document.getElementById('rbtn'+(i+1));
-    const cmd=document.getElementById('rcmd'+(i+1));
-    btn.className='relay-btn';
-    if(!canControl)btn.classList.add('disabled-btn');
+    const btn=document.getElementById('rbtn'+(i+1));const cmd=document.getElementById('rcmd'+(i+1));
+    btn.className='relay-btn';if(!canControl)btn.classList.add('disabled-btn');
     cmd.textContent=canControl?'Tap → Toggle':'Nonaktif';
   }
   const anyOn=relayState.some(s=>s);
-  const allOff=document.getElementById('relay-alloff');
-  allOff.classList.toggle('show',anyOn&&currentMode==='manual');
-  allOff.classList.toggle('disabled-btn',!canControl);
+  const allOn=relayState.every(s=>s);
+  const allOffBtn=document.getElementById('relay-alloff');
+  const allOnBtn=document.getElementById('relay-allon');
+
+  // Tampilkan tombol bulk hanya di mode manual
+  allOffBtn.classList.toggle('show',currentMode==='manual');
+  allOnBtn.classList.toggle('show',currentMode==='manual');
+  allOffBtn.classList.toggle('disabled-btn',!canControl||!anyOn);
+  allOnBtn.classList.toggle('disabled-btn',!canControl||allOn);
+
   document.getElementById('relay-warn').classList.toggle('show',currentMode==='manual');
   const note=document.getElementById('relay-note-txt');
   if(!conn)note.innerHTML='Hubungkan ke MQTT terlebih dahulu untuk mengontrol relay.';
-  else if(currentMode==='manual')note.innerHTML='Mode <b>MANUAL</b> aktif. Tap tombol untuk toggle relay di ESP32.';
+  else if(currentMode==='manual')note.innerHTML='Mode <b>MANUAL</b> aktif. Tap tombol untuk toggle, atau gunakan Nyalakan/Matikan Semua.';
   else if(currentMode==='auto')note.innerHTML='ESP32 dalam mode <b>AUTO</b>. Relay dikendalikan otomatis oleh sensor suhu.';
   else note.innerHTML='ESP32 mode <b>IDLE</b>. Relay tidak aktif.';
 }
+
 function toggleRelay(relayNum){
   if(!conn||currentMode!=='manual')return;
   const idx=relayNum-1;const newState=!relayState[idx];
-  sendRelayCmd(relayNum,newState);
-  relayState[idx]=newState;
+  sendRelayCmd(relayNum,newState);relayState[idx]=newState;
   renderLEDIndicators(relayState);renderRelayButtons();
-  const btn=document.getElementById('rbtn'+relayNum);
-  const cmdLbl=document.getElementById('rcmd'+relayNum);
+  const btn=document.getElementById('rbtn'+relayNum);const cmdLbl=document.getElementById('rcmd'+relayNum);
   btn.classList.add('sending');cmdLbl.textContent='Mengirim...';
-  setTimeout(()=>{btn.classList.remove('sending');cmdLbl.textContent='Tap → Toggle';},600);
+  setTimeout(function(){btn.classList.remove('sending');cmdLbl.textContent='Tap → Toggle';},600);
   addLog('CMD','Relay '+relayNum+' → '+(newState?'ON':'OFF'));
+  // FIX 2: catat ke riwayat
+  const ls=_getLastSensor();
+  addTableRow(new Date(),ls.suhu,ls.hum,ls.cahaya,null,'relay','Relay '+relayNum+' → '+(newState?'ON':'OFF'));
 }
+
+// FIX 5: Nyalakan semua relay
+function allRelayOn(){
+  if(!conn||currentMode!=='manual')return;
+  for(let i=0;i<4;i++){if(!relayState[i]){sendRelayCmd(i+1,true);relayState[i]=true;}}
+  renderLEDIndicators(relayState);renderRelayButtons();
+  addLog('CMD','ALL RELAY → ON (Manual)');
+  showAlert('▶ Semua relay dinyalakan','green');
+  // FIX 2: catat ke riwayat
+  const ls=_getLastSensor();
+  addTableRow(new Date(),ls.suhu,ls.hum,ls.cahaya,null,'relay','ALL RELAY → ON');
+}
+
+// FIX 5 + FIX 2: Matikan semua relay + catat riwayat
 function allRelayOff(){
   if(!conn||currentMode!=='manual')return;
   for(let i=0;i<4;i++){if(relayState[i]){sendRelayCmd(i+1,false);relayState[i]=false;}}
   renderLEDIndicators(relayState);renderRelayButtons();
-  addLog('CMD','ALL RELAY → OFF');
-  showAlert('⏹ Semua relay dimatikan','yellow');
+  addLog('CMD','ALL RELAY → OFF');showAlert('⏹ Semua relay dimatikan','yellow');
+  // FIX 2: catat ke riwayat
+  const ls=_getLastSensor();
+  addTableRow(new Date(),ls.suhu,ls.hum,ls.cahaya,null,'relay','ALL RELAY → OFF');
 }
+
 function sendRelayCmd(relayNum,state){
   if(!cl||!conn)return;
   const payload=JSON.stringify({relay:relayNum,state:state});
-  try{
-    const msg=new Paho.Message(payload);
-    msg.destinationName=TOPIC_CMD;msg.qos=1;cl.send(msg);
-    addLog('PUB','→ '+TOPIC_CMD+' '+payload);
-  }catch(e){addLog('ERR','Gagal kirim cmd: '+e.message);}
+  try{const msg=new Paho.Message(payload);msg.destinationName=TOPIC_CMD;msg.qos=1;cl.send(msg);addLog('PUB','→ '+TOPIC_CMD+' '+payload);}
+  catch(e){addLog('ERR','Gagal kirim cmd: '+e.message);}
 }
 
 /* ===== MQTT ===== */
 function toggle(){conn?doDisc():doConn();}
 function doConn(){
+  if(!pahoReady){
+    showAlert('⚠ Library MQTT belum siap. Tunggu sebentar atau refresh halaman.','yellow');
+    loadPaho(function(ok){if(ok)doConn();});return;
+  }
   manualDisconnect=false;badge('connecting','SYNC');btnDis(true);
   addLog('SYS','Menghubungkan ke '+BROKER+':'+PORT+'...');
   const id='Web-'+Math.floor(Math.random()*9000+1000);
@@ -1192,35 +1136,30 @@ function doDisc(){
     try{cl.disconnect();}catch(e){}
     const b=document.getElementById('btn');b.textContent='Hubungkan ke MQTT';b.classList.remove('disc');b.disabled=false;
     badge('','OFF');renderRelayButtons();addLog('SYS','Koneksi diputus manual.');
-    // Reset flag LDR saat disconnect
-    ldrDarkAsked=false;
-    _closeLdrDarkModal();
+    ldrDarkAsked=false;_closeLdrDarkModal();
   }
 }
 function onConn(){
   conn=true;badge('connected','LIVE');
   const b=document.getElementById('btn');b.disabled=false;b.textContent='Putuskan Koneksi';b.classList.add('disc');
   cl.subscribe(TOPIC_SUB,{qos:1});
-  addLog('SYS','✅ Connected: '+BROKER);
-  addLog('SYS','Subscribe: '+TOPIC_SUB);
+  addLog('SYS','✅ Connected: '+BROKER);addLog('SYS','Subscribe: '+TOPIC_SUB);
   st=Date.now();ui=setInterval(uptime,1000);
   renderRelayButtons();showAlert('✅ Terhubung ke HiveMQ Cloud','green');
 }
 function onFail(e){
   badge('error','ERROR');addLog('ERR','Gagal: '+e.errorMessage+' ('+e.errorCode+')');btnDis(false);renderRelayButtons();
-  if(!manualDisconnect){addLog('SYS','Retry dalam 5s...');setTimeout(()=>{if(!conn&&!manualDisconnect)doConn();},5000);}
+  if(!manualDisconnect){addLog('SYS','Retry dalam 5s...');setTimeout(function(){if(!conn&&!manualDisconnect)doConn();},5000);}
 }
 function onLost(resp){
   conn=false;badge('','OFF');btnDis(false);
   if(ui){clearInterval(ui);ui=null;}
   setSystemOff();resetLEDIndicators();
-  // Reset flag LDR saat koneksi terputus
-  ldrDarkAsked=false;
-  _closeLdrDarkModal();
+  ldrDarkAsked=false;_closeLdrDarkModal();
   const b=document.getElementById('btn');b.textContent='Hubungkan ke MQTT';b.classList.remove('disc');
   renderRelayButtons();
   if(resp.errorCode!==0)addLog('SYS','Terputus: '+resp.errorMessage);
-  if(!manualDisconnect){addLog('SYS','Reconnect dalam 3s...');setTimeout(()=>{if(!conn&&!manualDisconnect)doConn();},3000);}
+  if(!manualDisconnect){addLog('SYS','Reconnect dalam 3s...');setTimeout(function(){if(!conn&&!manualDisconnect)doConn();},3000);}
   manualDisconnect=false;
 }
 
@@ -1228,11 +1167,9 @@ function onLost(resp){
 function onMsg(m){
   const pl=m.payloadString.trim();
   mc++;localStorage.setItem('msg_count',mc);document.getElementById('mc').textContent=mc;
-  const now=new Date();
-  const timeNow=now.toLocaleTimeString('id-ID',{hour12:false});
+  const now=new Date();const timeNow=now.toLocaleTimeString('id-ID',{hour12:false});
   lastUpdateTimestamp=Date.now();
-  document.getElementById('lu').textContent=timeNow;
-  document.getElementById('lu-ago').textContent='baru saja';
+  document.getElementById('lu').textContent=timeNow;document.getElementById('lu-ago').textContent='baru saja';
   localStorage.setItem('last_update',timeNow);
   try{
     const d=JSON.parse(pl);
@@ -1242,41 +1179,12 @@ function onMsg(m){
     const cahaya=(d.cahaya||'').toUpperCase();
     const ledStr=d.led||'0000';
     const ls=parseLedField(ledStr);
-
-    /* ─────────────────────────────────────────────────────
-       Reset ldrDarkAsked jika:
-       1. Mode berubah dari auto ke yang lain
-       2. Cahaya kembali TERANG (dari gelap sebelumnya)
-       ───────────────────────────────────────────────────── */
-    if(currentMode==='auto' && mode!=='auto'){
-      ldrDarkAsked=false;
-    }
-    if(cahaya==='TERANG'){
-      // Saat terang, reset flag agar nanti kalau gelap lagi akan tanya lagi
-      if(ldrDarkAsked){
-        ldrDarkAsked=false;
-        addLog('LDR','Cahaya kembali TERANG — reset flag gelap');
-      }
-      // Tutup modal jika masih terbuka (misal sensor berubah cepat)
-      _closeLdrDarkModal();
-    }
-
+    if(currentMode==='auto'&&mode!=='auto')ldrDarkAsked=false;
+    if(cahaya==='TERANG'){if(ldrDarkAsked){ldrDarkAsked=false;addLog('LDR','Cahaya kembali TERANG — reset flag gelap');}_closeLdrDarkModal();}
     currentMode=mode;relayState=ls;
     localStorage.setItem('last_sensor',JSON.stringify({suhu,hum,cahaya,mode,led:ledStr}));
-    updModeBadge(mode,suhu);
-    renderLEDIndicators(ls);
-    pushChartPoint(suhu,hum);
-    renderRelayButtons();
-
-    /* ─────────────────────────────────────────────────────
-       CEK KONDISI LDR GELAP di mode AUTO
-       Tampilkan modal jika belum pernah tanya di sesi gelap ini
-       ───────────────────────────────────────────────────── */
-    if(mode==='auto' && cahaya==='GELAP' && !ldrDarkAsked){
-      ldrDarkAsked=true; // tandai sudah tanya, supaya tidak muncul lagi
-      showLdrDarkModal(suhu, hum);
-    }
-
+    updModeBadge(mode,suhu);renderLEDIndicators(ls);pushChartPoint(suhu,hum);renderRelayButtons();
+    if(mode==='auto'&&cahaya==='GELAP'&&!ldrDarkAsked){ldrDarkAsked=true;showLdrDarkModal(suhu,hum);}
     if(mode==='manual'){
       addLog('MODE','MANUAL · LED:'+ledStr);setSystemManual();
       if(suhu!==null&&hum!==null)updSensor(suhu,hum);
@@ -1284,18 +1192,12 @@ function onMsg(m){
       if(Date.now()-lastTableTime>=tableInterval){addTableRow(now,suhu,hum,cahaya,ledStr,'manual');lastTableTime=Date.now();}
     }else if(mode==='auto'){
       if(suhu===null||hum===null){addLog('ERR','Data tidak lengkap');return;}
-      addLog('SUHU',suhu.toFixed(1)+' °C');addLog('HUM',hum.toFixed(1)+' %');
-      addLog('LDR',cahaya||'—');addLog('LED','Status: '+ledStr);
-      setSystemOn(suhu);updSensor(suhu,hum);
-      if(cahaya)updLDR(cahaya);
-      cekAlert(suhu);
+      addLog('SUHU',suhu.toFixed(1)+' °C');addLog('HUM',hum.toFixed(1)+' %');addLog('LDR',cahaya||'—');addLog('LED','Status: '+ledStr);
+      setSystemOn(suhu);updSensor(suhu,hum);if(cahaya)updLDR(cahaya);cekAlert(suhu);
       if(Date.now()-lastTableTime>=tableInterval){addTableRow(now,suhu,hum,cahaya,ledStr,'auto');lastTableTime=Date.now();}
-    }else{
-      addLog('MODE','IDLE');setSystemOff();resetLEDIndicators();
-    }
+    }else{addLog('MODE','IDLE');setSystemOff();resetLEDIndicators();}
   }catch(e){addLog('ERR','JSON parse: '+e.message);}
 }
-
 function parseLedField(led){
   const s=[false,false,false,false];
   if(led===undefined||led===null)return s;
@@ -1344,18 +1246,22 @@ function updSensor(suhu,hum){
   document.getElementById('hb').style.width=Math.min(100,hum)+'%';
 }
 function updLDR(v){
-  const iw=document.getElementById('ldr-icon-wrap');
-  const lv=document.getElementById('ldr-value');
-  const lp=document.getElementById('ldr-pill');
-  if(v==='TERANG'){
-    iw.textContent='☀️';iw.className='ldr-icon-wrap terang';
-    lv.textContent='Terang';lv.className='ldr-value terang';
-    lp.textContent='Siang / Cerah';lp.className='ldr-pill terang';
-  }else{
-    iw.textContent='🌙';iw.className='ldr-icon-wrap gelap';
-    lv.textContent='Gelap';lv.className='ldr-value gelap';
-    lp.textContent='Malam / Redup';lp.className='ldr-pill gelap';
-  }
+  const iw=document.getElementById('ldr-icon-wrap');const lv=document.getElementById('ldr-value');const lp=document.getElementById('ldr-pill');
+  if(v==='TERANG'){iw.textContent='☀️';iw.className='ldr-icon-wrap terang';lv.textContent='Terang';lv.className='ldr-value terang';lp.textContent='Siang / Cerah';lp.className='ldr-pill terang';}
+  else{iw.textContent='🌙';iw.className='ldr-icon-wrap gelap';lv.textContent='Gelap';lv.className='ldr-value gelap';lp.textContent='Malam / Redup';lp.className='ldr-pill gelap';}
+}
+
+/* ===== FIX 1: ALERT DI ATAS — render ke #alert-stack ===== */
+function showAlert(t,type){
+  const stack=document.getElementById('alert-stack');
+  const div=document.createElement('div');
+  div.className='alert-box alert-'+type;
+  div.innerText=t;
+  stack.appendChild(div);
+  setTimeout(function(){
+    div.classList.add('fade-out');
+    setTimeout(function(){try{stack.removeChild(div);}catch(e){}},280);
+  },3200);
 }
 
 /* ===== UTILS ===== */
@@ -1370,14 +1276,42 @@ function addLog(tp,msg){
   while(el.children.length>120)el.removeChild(el.firstChild);
 }
 function uptime(){if(!st)return;const s=Math.floor((Date.now()-st)/1000);document.getElementById('up').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
-function showAlert(t,type){const div=document.createElement('div');div.className='alert-box alert-'+type;div.innerText=t;document.body.appendChild(div);setTimeout(()=>div.remove(),3500);}
 
-/* ===== INIT ===== */
-window.addEventListener('load',()=>{
+/* ===== BIND ALL EVENTS ===== */
+document.addEventListener('DOMContentLoaded',function(){
   loadHistory();
-  loadChartJS(()=>initChart());
+  loadChartJS(function(){initChart();});
   resetLEDIndicators();
   renderRelayButtons();
+
+  document.getElementById('back-btn').addEventListener('click',backToSplash);
+  document.getElementById('btn').addEventListener('click',toggle);
+
+  for(let i=1;i<=4;i++){
+    (function(n){
+      document.getElementById('rbtn'+n).addEventListener('click',function(){toggleRelay(n);});
+    })(i);
+  }
+
+  // FIX 5: Bind tombol Nyalakan Semua & Matikan Semua
+  document.getElementById('relay-allon').addEventListener('click',allRelayOn);
+  document.getElementById('relay-alloff').addEventListener('click',allRelayOff);
+
+  document.getElementById('del-cancel-btn').addEventListener('click',closeDelModal);
+  document.getElementById('del-confirm-btn').addEventListener('click',confirmDelete);
+  document.getElementById('del-modal').addEventListener('click',function(e){if(e.target===this)closeDelModal();});
+  document.getElementById('del-btn').addEventListener('click',deleteSelected);
+
+  document.getElementById('csv-cancel-btn').addEventListener('click',closeCsvModal);
+  document.getElementById('csv-confirm-btn').addEventListener('click',doExportCSV);
+  document.getElementById('csv-modal').addEventListener('click',function(e){if(e.target===this)closeCsvModal();});
+  document.getElementById('csv-btn').addEventListener('click',exportCSV);
+
+  document.getElementById('ldr-reject-btn').addEventListener('click',function(){rejectLdrDark(false);});
+  document.getElementById('ldr-confirm-btn').addEventListener('click',confirmLdrDark);
+  document.getElementById('ldr-dark-modal').addEventListener('click',function(e){if(e.target===this)rejectLdrDark(false);});
+
+  document.getElementById('chk-all').addEventListener('change',function(){toggleAll(this);});
 });
 </script>
 </body>
